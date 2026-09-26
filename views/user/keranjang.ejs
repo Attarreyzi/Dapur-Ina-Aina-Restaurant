@@ -51,12 +51,9 @@
                                     *</label>
                                 <select name="nomor_meja" class="form-control" required
                                     style="height: 44px; font-size: 0.9rem;">
-                                    <option value="Meja 01">Meja 01</option>
-                                    <option value="Meja 02">Meja 02</option>
-                                    <option value="Meja 03">Meja 03</option>
-                                    <option value="Meja 04">Meja 04</option>
-                                    <option value="Meja 05">Meja 05</option>
-                                    <option value="Meja 06">Meja 06</option>
+                                    <% for (let i = 1; i <= 20; i++) { %>
+                                        <option value="Meja <%= i < 10 ? '0' + i : i %>">Meja <%= i < 10 ? '0' + i : i %></option>
+                                    <% } %>
                                     <option value="Take Away (Bungkus)">Take Away (Bungkus)</option>
                                 </select>
                             </div>
