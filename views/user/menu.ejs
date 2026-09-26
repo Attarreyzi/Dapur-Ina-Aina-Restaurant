@@ -79,61 +79,65 @@
 
 <!-- Modal Pop-up Detail Produk (Muncul Saat Foto Produk Diklik) -->
 <div class="modal-overlay" id="productDetailModal" onclick="closeProductDetail(event)">
-    <div class="modal-box" style="max-width: 520px; padding: 0; overflow: hidden; border-radius: var(--radius-xl);" onclick="event.stopPropagation()">
-        <!-- Header Foto Makanan -->
-        <div style="position: relative; height: 260px; width: 100%; background: #f8fafc; overflow: hidden;">
-            <img id="detailModalImg" src="" alt="" style="width: 100%; height: 100%; object-fit: cover;">
-            
-            <!-- Category Badge -->
-            <div style="position: absolute; top: 14px; left: 14px;">
-                <span id="detailModalCategory" style="font-size: 0.74rem; font-weight: 800; text-transform: uppercase; background: rgba(255, 255, 255, 0.95); color: var(--primary); padding: 4px 12px; border-radius: var(--radius-full); box-shadow: 0 2px 8px rgba(0,0,0,0.15); letter-spacing: 0.04em;">
-                    Makanan
-                </span>
-            </div>
-
-            <!-- Tombol Tutup X -->
-            <button type="button" onclick="closeProductDetail()" aria-label="Tutup" style="position: absolute; top: 12px; right: 12px; width: 34px; height: 34px; border-radius: 50%; background: rgba(15, 23, 42, 0.65); border: none; color: #ffffff; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px); transition: all 0.15s ease;">
-                ✕
-            </button>
-        </div>
-
-        <!-- Body Detail Produk -->
-        <div style="padding: 22px 24px;">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 8px;">
-                <h3 id="detailModalTitle" style="font-size: 1.35rem; font-weight: 800; color: var(--text-main); margin: 0; line-height: 1.25;">
-                    Nama Hidangan
-                </h3>
-                <span id="detailModalStock" class="stock-badge stock-tersedia" style="font-size: 0.78rem; flex-shrink: 0; padding: 4px 10px;">
-                    Tersedia
-                </span>
-            </div>
-
-            <div id="detailModalPrice" style="font-size: 1.35rem; font-weight: 800; color: var(--primary); margin-bottom: 16px;">
-                Rp 0
-            </div>
-
-            <div style="margin-bottom: 18px;">
-                <div style="font-size: 0.76rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px;">
-                    Deskripsi & Racikan Cita Rasa
+    <div class="modal-box" style="max-width: 520px; padding: 0; display: flex; flex-direction: column; max-height: 90vh; border-radius: var(--radius-xl); overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.3);" onclick="event.stopPropagation()">
+        
+        <!-- Scrollable Content Area (Foto, Judul, Kategori, Harga & Deskripsi) -->
+        <div style="flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;">
+            <!-- Header Foto Makanan -->
+            <div style="position: relative; height: 260px; width: 100%; background: #f8fafc; overflow: hidden; flex-shrink: 0;">
+                <img id="detailModalImg" src="" alt="" style="width: 100%; height: 100%; object-fit: cover;">
+                
+                <!-- Category Badge -->
+                <div style="position: absolute; top: 14px; left: 14px;">
+                    <span id="detailModalCategory" style="font-size: 0.74rem; font-weight: 800; text-transform: uppercase; background: rgba(255, 255, 255, 0.95); color: var(--primary); padding: 4px 12px; border-radius: var(--radius-full); box-shadow: 0 2px 8px rgba(0,0,0,0.15); letter-spacing: 0.04em;">
+                        Makanan
+                    </span>
                 </div>
-                <p id="detailModalDesc" style="font-size: 0.92rem; color: #475569; line-height: 1.6; margin: 0; background: #f8fafc; padding: 14px 16px; border-radius: var(--radius-md); border: 1px solid var(--border-light);">
-                    Deskripsi sajian...
-                </p>
+
+                <!-- Tombol Tutup X -->
+                <button type="button" onclick="closeProductDetail()" aria-label="Tutup" style="position: absolute; top: 12px; right: 12px; width: 34px; height: 34px; border-radius: 50%; background: rgba(15, 23, 42, 0.65); border: none; color: #ffffff; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px); transition: all 0.15s ease; z-index: 5;">
+                    ✕
+                </button>
+            </div>
+
+            <!-- Body Detail Produk -->
+            <div style="padding: 20px 24px;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 8px;">
+                    <h3 id="detailModalTitle" style="font-size: 1.35rem; font-weight: 800; color: var(--text-main); margin: 0; line-height: 1.25;">
+                        Nama Hidangan
+                    </h3>
+                    <span id="detailModalStock" class="stock-badge stock-tersedia" style="font-size: 0.78rem; flex-shrink: 0; padding: 4px 10px;">
+                        Tersedia
+                    </span>
+                </div>
+
+                <div id="detailModalPrice" style="font-size: 1.35rem; font-weight: 800; color: var(--primary); margin-bottom: 16px;">
+                    Rp 0
+                </div>
+
+                <div style="margin-bottom: 10px;">
+                    <div style="font-size: 0.76rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px;">
+                        Deskripsi & Racikan Cita Rasa
+                    </div>
+                    <p id="detailModalDesc" style="font-size: 0.92rem; color: #475569; line-height: 1.6; margin: 0; background: #f8fafc; padding: 14px 16px; border-radius: var(--radius-md); border: 1px solid var(--border-light);">
+                        Deskripsi sajian...
+                    </p>
+                </div>
             </div>
         </div>
 
-        <!-- Footer Modal: Pengatur Porsi & Tombol Tambah ke Keranjang -->
-        <div style="padding: 16px 24px; background: #f8fafc; border-top: 1px solid var(--border-light); display: flex; align-items: center; justify-content: space-between; gap: 14px;">
-            <div style="display: flex; align-items: center; gap: 8px;">
+        <!-- Footer Modal Pinned / Sticky: Pengatur Porsi & Tombol Tambah ke Keranjang -->
+        <div style="padding: 14px 20px; background: #ffffff; border-top: 1px solid var(--border-light); display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-shrink: 0; box-shadow: 0 -4px 12px rgba(0,0,0,0.03);">
+            <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
                 <span style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted);">Porsi:</span>
-                <div class="cart-stepper" style="background: #ffffff; border: 1px solid var(--border-light);">
+                <div class="cart-stepper" style="background: #f8fafc; border: 1px solid var(--border-light);">
                     <button type="button" class="cart-stepper-btn" onclick="updateModalDetailQty(-1)" aria-label="Kurangi porsi">-</button>
-                    <span class="cart-stepper-num" id="modalDetailQty">1</span>
+                    <span class="cart-stepper-num" id="modalDetailQty" style="font-weight: 800; min-width: 24px; text-align: center;">1</span>
                     <button type="button" class="cart-stepper-btn" id="modalDetailBtnPlus" onclick="updateModalDetailQty(1)" aria-label="Tambah porsi">+</button>
                 </div>
             </div>
 
-            <button type="button" class="btn btn-primary" id="modalDetailBtnAdd" onclick="addModalDetailToCart()" style="flex: 1; height: 44px; font-weight: 800; font-size: 0.92rem; display: inline-flex; align-items: center; justify-content: center; gap: 6px;">
+            <button type="button" class="btn btn-primary" id="modalDetailBtnAdd" onclick="addModalDetailToCart()" style="flex: 1; height: 44px; font-weight: 800; font-size: 0.92rem; display: inline-flex; align-items: center; justify-content: center; gap: 6px; border-radius: var(--radius-lg); white-space: nowrap;">
                 <span>+ Masukkan Keranjang</span>
                 <span id="modalDetailSubtotal"></span>
             </button>
