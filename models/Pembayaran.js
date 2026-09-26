@@ -24,7 +24,9 @@ class Pembayaran {
         }
 
         const totalTagihan = parseFloat(order.total_harga);
-        const metodeClean = (metode_pembayaran || 'tunai').toLowerCase().includes('non') ? 'non_tunai' : 'tunai';
+        const met = (metode_pembayaran || 'tunai').toLowerCase();
+        const isNonTunai = met.includes('non') || met.includes('qris') || met.includes('debit') || met.includes('transfer') || met.includes('midtrans') || met.includes('card') || met.includes('gopay') || met.includes('shopee') || met.includes('ovo') || met.includes('dana') || met.includes('va');
+        const metodeClean = isNonTunai ? 'non_tunai' : 'tunai';
         let cashReceived = parseFloat(uang_diterima) || 0;
         let change = 0;
 
@@ -63,8 +65,12 @@ class Pembayaran {
 
             await client.query('COMMIT');
 
+            const transRow = (resTrans && resTrans.rows && resTrans.rows[0]) ? resTrans.rows[0] : {};
+            const idTransaksi = transRow.id_transaksi || idPesanan;
+            const tanggalBayar = transRow.tanggal_bayar || new Date().toISOString();
+
             return {
-                id_transaksi: resTrans.rows[0].id_transaksi,
+                id_transaksi: idTransaksi,
                 id_pesanan: idPesanan,
                 no_pesanan: order.no_pesanan,
                 metode_pembayaran: (metodeClean === 'tunai' ? 'Tunai' : 'Non Tunai'),
@@ -72,7 +78,7 @@ class Pembayaran {
                 uang_diterima: cashReceived,
                 uang_kembalian: change,
                 no_referensi,
-                tanggal_bayar: resTrans.rows[0].tanggal_bayar
+                tanggal_bayar: tanggalBayar
             };
         } catch (err) {
             await client.query('ROLLBACK');

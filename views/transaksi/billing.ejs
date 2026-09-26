@@ -87,26 +87,35 @@
                 <form action="/proses_bayar" method="POST" id="billingPaymentForm">
                     <input type="hidden" name="id_pesanan" value="<%= order.id_pesanan %>">
 
-                    <!-- Payment Method Toggle -->
+                    <!-- Payment Method Toggle (3 Options: Tunai, QRIS/E-Wallet, Debit EDC) -->
                     <div class="form-group">
                         <label class="form-label">Metode Pembayaran</label>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;">
                             <label style="cursor: pointer;">
                                 <input type="radio" name="metode_pembayaran" value="tunai" checked
                                     style="display: none;" id="methodTunai">
                                 <div class="category-tab-btn"
-                                    style="width: 100%; text-align: center; padding: 12px; border-radius: var(--radius-md);"
+                                    style="width: 100%; text-align: center; padding: 10px 4px; font-size: 0.82rem; font-weight: 700; border-radius: var(--radius-md);"
                                     id="labelTunai">
-                                    Tunai (Cash)
+                                    Tunai
                                 </div>
                             </label>
                             <label style="cursor: pointer;">
                                 <input type="radio" name="metode_pembayaran" value="non_tunai" style="display: none;"
                                     id="methodNonTunai">
                                 <div class="category-tab-btn"
-                                    style="width: 100%; text-align: center; padding: 12px; border-radius: var(--radius-md);"
+                                    style="width: 100%; text-align: center; padding: 10px 4px; font-size: 0.82rem; font-weight: 700; border-radius: var(--radius-md);"
                                     id="labelNonTunai">
-                                    QRIS & E-Wallet
+                                    QRIS / E-Wallet
+                                </div>
+                            </label>
+                            <label style="cursor: pointer;">
+                                <input type="radio" name="metode_pembayaran" value="debit" style="display: none;"
+                                    id="methodDebit">
+                                <div class="category-tab-btn"
+                                    style="width: 100%; text-align: center; padding: 10px 4px; font-size: 0.82rem; font-weight: 700; border-radius: var(--radius-md);"
+                                    id="labelDebit">
+                                    Kartu Debit
                                 </div>
                             </label>
                         </div>
@@ -179,6 +188,28 @@
                         </div>
                     </div>
 
+                    <!-- Debit EDC Section -->
+                    <div id="debitSection" style="display: none;">
+                        <div
+                            style="padding: 16px; background: #eff6ff; border: 1.5px solid #bfdbfe; border-radius: var(--radius-md); margin-bottom: 18px;">
+                            <div style="font-weight: 800; font-size: 1rem; color: #1e40af; margin-bottom: 4px;">
+                                Pembayaran Kartu Debit / EDC
+                            </div>
+                            <div style="font-size: 0.84rem; color: #3b82f6; margin-bottom: 12px;">
+                                Silakan gesek / tap kartu debit pelanggan pada mesin EDC kasir sebesar:
+                            </div>
+                            <div style="font-size: 1.45rem; font-weight: 800; color: #1d4ed8;">
+                                <%= formatRupiah(order.total_harga) %>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">No. Kartu / Trace Number EDC (Opsional)</label>
+                            <input type="text" name="no_referensi_debit" id="debitRefInput" class="form-control"
+                                placeholder="Contoh: EDC-BCA-981240">
+                        </div>
+                    </div>
+
                     <button type="submit" class="btn btn-success btn-block btn-lg" id="btnSubmitBayar"
                         style="margin-top: 10px;">
                         Konfirmasi & Cetak Struk
@@ -239,22 +270,35 @@
 
             const rTunai = document.getElementById('methodTunai');
             const rNonTunai = document.getElementById('methodNonTunai');
+            const rDebit = document.getElementById('methodDebit');
             const lTunai = document.getElementById('labelTunai');
             const lNonTunai = document.getElementById('labelNonTunai');
+            const lDebit = document.getElementById('labelDebit');
 
             function updateLabels() {
-                if (rTunai.checked) {
-                    lTunai.classList.add('active');
-                    lNonTunai.classList.remove('active');
-                } else {
-                    lTunai.classList.remove('active');
-                    lNonTunai.classList.add('active');
-                }
+                lTunai.classList.toggle('active', rTunai.checked);
+                lNonTunai.classList.toggle('active', rNonTunai.checked);
+                if (lDebit && rDebit) lDebit.classList.toggle('active', rDebit.checked);
             }
 
             rTunai.addEventListener('change', updateLabels);
             rNonTunai.addEventListener('change', updateLabels);
+            if (rDebit) rDebit.addEventListener('change', updateLabels);
             updateLabels();
+
+            // Intercept form submit if Debit is selected to pass debitRef to no_referensi
+            document.getElementById('billingPaymentForm')?.addEventListener('submit', function() {
+                if (rDebit && rDebit.checked) {
+                    const debitRef = document.getElementById('debitRefInput')?.value;
+                    if (debitRef) {
+                        const hiddenRef = document.createElement('input');
+                        hiddenRef.type = 'hidden';
+                        hiddenRef.name = 'no_referensi';
+                        hiddenRef.value = debitRef;
+                        this.appendChild(hiddenRef);
+                    }
+                }
+            });
         });
     </script>
 

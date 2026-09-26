@@ -266,8 +266,8 @@ const memoryDb = {
             id_admin: 1,
             nama: 'Administrator Dapur Ina',
             email: 'admin@dapurina.com',
-            // bcrypt hash of 'admin123'
-            password: '$2a$10$xhWMfsyyDADChK2wXmHmneoaoj//ttZbBcVgB9kkOAUodeWBIx2M6',
+            // bcrypt hash of 'DapurIna#2026!'
+            password: bcrypt.hashSync('DapurIna#2026!', 10),
             created_at: new Date().toISOString()
         }
     ],
@@ -303,7 +303,10 @@ function runMemoryQuery(sql, params = []) {
         else if (lower.includes('from laporan_penjualan')) tableName = 'laporan_penjualan';
 
         let list = [...(memoryDb[tableName] || [])];
-        return Promise.resolve({ rows: [{ count: list.length, count_admin: list.length }], rowCount: 1 });
+        if (tableName === 'pesanan' && lower.includes("status = 'menunggu'")) {
+            list = list.filter(p => (p.status || 'Menunggu') === 'Menunggu');
+        }
+        return Promise.resolve({ rows: [{ count: list.length, count_admin: list.length, total_menunggu: list.length }], rowCount: 1 });
     }
 
     // 2. SELECT PRODUK
@@ -380,11 +383,11 @@ function runMemoryQuery(sql, params = []) {
                 id_transaksi: trx.id_transaksi || null,
                 tanggal_bayar: trx.tanggal_bayar || null,
                 metode_pembayaran: trx.metode || p.metode_pembayaran || 'tunai',
-                jumlah_bayar: parseFloat(trx.jumlah_bayar) || 0,
-                uang_diterima: parseFloat(trx.uang_diterima) || 0,
-                uang_kembalian: parseFloat(trx.uang_kembalian) || 0,
+                jumlah_bayar: parseFloat(trx.jumlah_bayar || p.total || 0),
+                uang_diterima: parseFloat(trx.uang_diterima || p.total || 0),
+                uang_kembalian: parseFloat(trx.uang_kembalian || 0),
                 no_referensi: trx.no_referensi || '',
-                status_transaksi: trx.status || 'Menunggu',
+                status_transaksi: trx.status || p.status || 'Menunggu',
                 total_item: totalItem,
                 rincian_menu: rincianMenu
             };
@@ -517,7 +520,6 @@ function runMemoryQuery(sql, params = []) {
             newRow.no_telepon = params[1];
             newRow.alamat = params[2];
         } else if (tableName === 'pesanan') {
-            // INSERT INTO pesanan (id_pelanggan, tanggal, total, status, nomor_meja, catatan, metode_pembayaran) VALUES ($1, NOW(), $2, 'Menunggu', $3, $4, $5)
             newRow.id_pelanggan = params[0];
             newRow.total = parseFloat(params[1]) || 0;
             newRow.status = 'Menunggu';
@@ -533,15 +535,39 @@ function runMemoryQuery(sql, params = []) {
             newRow.harga = parseFloat(params[3]) || 0;
             newRow.subtotal = parseFloat(params[4]) || (newRow.jumlah * newRow.harga);
         } else if (tableName === 'transaksi') {
-            newRow.id_pesanan = params[0];
-            newRow.id_laporan = params[1] || null;
-            newRow.metode = params[2] || 'tunai';
-            newRow.jumlah_bayar = parseFloat(params[3]) || 0;
-            newRow.uang_diterima = parseFloat(params[4]) || 0;
-            newRow.uang_kembalian = parseFloat(params[5]) || 0;
-            newRow.no_referensi = params[6] || '';
-            newRow.status = params[7] || 'Selesai';
+            const idPes = parseInt(params[0], 10);
+            const met = String(params[1] || 'tunai').toLowerCase();
+            const isNonTunai = met.includes('non') || met.includes('qris') || met.includes('debit') || met.includes('transfer') || met.includes('midtrans') || met.includes('card');
+            const metodeClean = isNonTunai ? 'non_tunai' : 'tunai';
+            const jumlahBayar = parseFloat(params[2]) || 0;
+            const uangDiterima = parseFloat(params[3]) || jumlahBayar;
+            const uangKembalian = parseFloat(params[4]) || 0;
+            const noRef = params[5] || '';
+
+            const existingIdx = memoryDb.transaksi.findIndex(t => String(t.id_pesanan) === String(idPes));
+            newRow.id_pesanan = idPes;
+            newRow.id_laporan = null;
+            newRow.metode = metodeClean;
+            newRow.jumlah_bayar = jumlahBayar;
+            newRow.uang_diterima = uangDiterima;
+            newRow.uang_kembalian = uangKembalian;
+            newRow.no_referensi = noRef;
+            newRow.status = 'Selesai';
             newRow.tanggal_bayar = new Date().toISOString();
+
+            // Tandai pesanan terkait sebagai Selesai
+            const pes = memoryDb.pesanan.find(p => String(p.id_pesanan) === String(idPes));
+            if (pes) {
+                pes.status = 'Selesai';
+            }
+
+            if (existingIdx >= 0) {
+                newRow.id_transaksi = memoryDb.transaksi[existingIdx].id_transaksi;
+                memoryDb.transaksi[existingIdx] = newRow;
+            } else {
+                memoryDb.transaksi.push(newRow);
+            }
+            return Promise.resolve({ rows: [newRow], rowCount: 1, lastInsertId: newRow.id_transaksi });
         }
 
         memoryDb[tableName].push(newRow);
@@ -564,12 +590,18 @@ function runMemoryQuery(sql, params = []) {
                     found.snap_token = params[0];
                 }
                 if (lower.includes('status =')) {
-                    found.status = params[0];
+                    if (lower.includes("status = 'selesai'")) {
+                        found.status = 'Selesai';
+                    } else if (params[0] === 'Selesai' || params[0] === 'Menunggu') {
+                        found.status = params[0];
+                    } else {
+                        found.status = 'Selesai';
+                    }
                 }
             } else if (tableName === 'produk') {
                 if (lower.includes('set stok =')) {
                     found.stok = parseInt(params[0], 10) || 0;
-                    found.status_stok = params[1];
+                    found.status_stok = params[1] || (found.stok <= 0 ? 'Habis' : (found.stok <= 5 ? 'Menipis' : 'Tersedia'));
                 }
             }
         }
@@ -836,14 +868,19 @@ async function initDatabase() {
         // Kolom sudah ada
     }
 
-    // Seed Admin Default jika belum ada
+    // Seed Admin Default jika belum ada / sinkronkan password aman
+    const defaultPassword = await bcrypt.hash('DapurIna#2026!', 10);
     const adminCheck = await query('SELECT COUNT(*) as count FROM administrator');
     const adminCount = parseInt(adminCheck.rows[0].count, 10);
     if (adminCount === 0) {
-        const defaultPassword = await bcrypt.hash('admin123', 10);
         await query(
             `INSERT INTO administrator (nama, email, password) VALUES ($1, $2, $3)`,
             ['Administrator Dapur Ina', 'admin@dapurina.com', defaultPassword]
+        );
+    } else {
+        await query(
+            `UPDATE administrator SET password = $1 WHERE LOWER(email) = 'admin@dapurina.com'`,
+            [defaultPassword]
         );
     }
 
