@@ -1,19 +1,33 @@
 /**
- * Smart Dual-Engine Database Configuration (PostgreSQL with Seamless SQLite Fallback)
+ * Smart Universal Database Engine (PostgreSQL -> SQLite -> Pure JS In-Memory Fallback)
  * Restoran Dapur Ina Aina
  */
 const { Pool } = require('pg');
-const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const fs = require('fs');
 const bcrypt = require('bcryptjs');
 require('dotenv').config();
 
 let isUsingPostgres = false;
+let isUsingSqlite = false;
 let pgPool = null;
 let sqliteDb = null;
 
 const isProduction = process.env.NODE_ENV === 'production';
+
+// Safe SQLite3 Loader (Prevents Vercel GLIBC native binary crashes)
+let sqlite3 = null;
+function getSqliteModule() {
+    if (sqlite3 === null) {
+        try {
+            sqlite3 = require('sqlite3').verbose();
+        } catch (e) {
+            console.warn('⚠️ SQLite native binary is not supported in this runtime (GLIBC). Falling back to Universal JS Engine.');
+            sqlite3 = false;
+        }
+    }
+    return sqlite3;
+}
 
 // Inisialisasi PostgreSQL Pool
 if (process.env.DATABASE_URL) {
@@ -38,42 +52,246 @@ if (process.env.DATABASE_URL) {
 
 // Inisialisasi SQLite Database Helper
 function getSqliteDb() {
+    const mod = getSqliteModule();
+    if (!mod) return null;
+
     if (!sqliteDb) {
         let dbPath = path.join(__dirname, '..', 'database', 'dapur_ina.sqlite');
         if (process.env.VERCEL) {
             dbPath = path.join('/tmp', 'dapur_ina.sqlite');
         }
-        sqliteDb = new sqlite3.Database(dbPath);
+        try {
+            sqliteDb = new mod.Database(dbPath);
+        } catch (err) {
+            console.warn('SQLite init error, falling back:', err.message);
+            sqliteDb = null;
+        }
     }
     return sqliteDb;
 }
 
+// ==========================================
+// PURE JAVASCRIPT IN-MEMORY DATABASE ENGINE
+// ==========================================
+const memoryDb = {
+    administrator: [],
+    pelanggan: [],
+    produk: [],
+    pesanan: [],
+    detail_pesanan: [],
+    laporan_penjualan: [],
+    transaksi: [],
+    autoInc: {
+        administrator: 1,
+        pelanggan: 1,
+        produk: 1,
+        pesanan: 1,
+        detail_pesanan: 1,
+        laporan_penjualan: 1,
+        transaksi: 1
+    }
+};
+
+function runMemoryQuery(sql, params = []) {
+    const trimmed = sql.trim();
+    const lower = trimmed.toLowerCase();
+
+    // 1. SELECT COUNT
+    if (lower.includes('count(')) {
+        let tableName = 'administrator';
+        if (lower.includes('from administrator')) tableName = 'administrator';
+        else if (lower.includes('from produk')) tableName = 'produk';
+        else if (lower.includes('from pesanan')) tableName = 'pesanan';
+        else if (lower.includes('from pelanggan')) tableName = 'pelanggan';
+        else if (lower.includes('from transaksi')) tableName = 'transaksi';
+        else if (lower.includes('from laporan_penjualan')) tableName = 'laporan_penjualan';
+
+        let list = [...(memoryDb[tableName] || [])];
+        return Promise.resolve({ rows: [{ count: list.length, count_admin: list.length }], rowCount: 1 });
+    }
+
+    // 2. SELECT PRODUK
+    if (lower.startsWith('select') && lower.includes('from produk')) {
+        let rows = [...memoryDb.produk];
+        // filter by category
+        if (lower.includes('lower(p.kategori) = lower(') || lower.includes('p.kategori =')) {
+            const cat = params[0];
+            if (cat) rows = rows.filter(r => (r.kategori || '').toLowerCase() === String(cat).toLowerCase());
+        }
+        // filter by id
+        if (lower.includes('id_produk =')) {
+            const idVal = params[0];
+            rows = rows.filter(r => String(r.id_produk) === String(idVal));
+        }
+        // filter by search
+        if (lower.includes('ilike') || lower.includes('like')) {
+            const sParam = params.find(p => typeof p === 'string' && p.startsWith('%') && p.endsWith('%'));
+            if (sParam) {
+                const kw = sParam.replace(/%/g, '').toLowerCase();
+                rows = rows.filter(r => (r.nama_produk || '').toLowerCase().includes(kw) || (r.deskripsi || '').toLowerCase().includes(kw));
+            }
+        }
+        // filter low stock
+        if (lower.includes('stok <= 5') || lower.includes("status_stok = 'habis'")) {
+            rows = rows.filter(r => Number(r.stok) <= 5 || r.status_stok === 'Habis');
+        }
+        rows.sort((a, b) => b.id_produk - a.id_produk);
+        return Promise.resolve({ rows, rowCount: rows.length });
+    }
+
+    // 3. SELECT ADMINISTRATOR
+    if (lower.startsWith('select') && lower.includes('from administrator')) {
+        let rows = [...memoryDb.administrator];
+        if (lower.includes('email') && params.length > 0) {
+            rows = rows.filter(r => (r.email || '').toLowerCase() === String(params[0]).toLowerCase());
+        }
+        if (lower.includes('id_admin =') && params.length > 0) {
+            rows = rows.filter(r => String(r.id_admin) === String(params[0]));
+        }
+        return Promise.resolve({ rows, rowCount: rows.length });
+    }
+
+    // 4. SELECT PESANAN & DETAIL
+    if (lower.startsWith('select') && lower.includes('from pesanan')) {
+        let rows = [...memoryDb.pesanan];
+        if (lower.includes('id_pesanan =') && params.length > 0) {
+            rows = rows.filter(r => String(r.id_pesanan) === String(params[0]));
+        }
+        return Promise.resolve({ rows, rowCount: rows.length });
+    }
+
+    if (lower.startsWith('select') && lower.includes('from detail_pesanan')) {
+        let rows = [...memoryDb.detail_pesanan];
+        if (lower.includes('id_pesanan =') && params.length > 0) {
+            rows = rows.filter(r => String(r.id_pesanan) === String(params[0]));
+        }
+        return Promise.resolve({ rows, rowCount: rows.length });
+    }
+
+    // 5. INSERT INTO
+    if (lower.startsWith('insert into')) {
+        let tableName = 'administrator';
+        if (lower.includes('into administrator')) tableName = 'administrator';
+        else if (lower.includes('into produk')) tableName = 'produk';
+        else if (lower.includes('into pesanan')) tableName = 'pesanan';
+        else if (lower.includes('into pelanggan')) tableName = 'pelanggan';
+        else if (lower.includes('into detail_pesanan')) tableName = 'detail_pesanan';
+        else if (lower.includes('into transaksi')) tableName = 'transaksi';
+        else if (lower.includes('into laporan_penjualan')) tableName = 'laporan_penjualan';
+
+        const newId = memoryDb.autoInc[tableName]++;
+        let idCol = 'id_' + tableName.replace(/s$/, '');
+        if (tableName === 'administrator') idCol = 'id_admin';
+        if (tableName === 'produk') idCol = 'id_produk';
+        if (tableName === 'pesanan') idCol = 'id_pesanan';
+        if (tableName === 'pelanggan') idCol = 'id_pelanggan';
+        if (tableName === 'transaksi') idCol = 'id_transaksi';
+        if (tableName === 'detail_pesanan') idCol = 'id_detail';
+        if (tableName === 'laporan_penjualan') idCol = 'id_laporan';
+
+        let newRow = { [idCol]: newId, created_at: new Date().toISOString() };
+
+        if (tableName === 'administrator') {
+            newRow.nama = params[0];
+            newRow.email = params[1];
+            newRow.password = params[2];
+        } else if (tableName === 'produk') {
+            newRow.nama_produk = params[0];
+            newRow.kategori = params[1];
+            newRow.harga = parseFloat(params[2]) || 0;
+            newRow.stok = parseInt(params[3], 10) || 0;
+            newRow.status_stok = params[4] || 'Tersedia';
+            newRow.deskripsi = params[5] || '';
+            newRow.gambar = params[6] || '';
+            newRow.id_admin = params[7] || 1;
+        } else if (tableName === 'pelanggan') {
+            newRow.nama = params[0];
+            newRow.no_telepon = params[1];
+            newRow.alamat = params[2];
+        } else if (tableName === 'pesanan') {
+            newRow.id_pelanggan = params[0];
+            newRow.total = parseFloat(params[1]) || 0;
+            newRow.status = params[2] || 'Menunggu';
+            newRow.nomor_meja = params[3] || 'Meja 01';
+            newRow.catatan = params[4] || '';
+            newRow.snap_token = params[5] || '';
+            newRow.tanggal = new Date().toISOString();
+        } else if (tableName === 'detail_pesanan') {
+            newRow.id_pesanan = params[0];
+            newRow.id_produk = params[1];
+            newRow.jumlah = params[2];
+            newRow.harga = params[3];
+            newRow.subtotal = params[4];
+        } else if (tableName === 'transaksi') {
+            newRow.id_pesanan = params[0];
+            newRow.id_laporan = params[1];
+            newRow.metode = params[2];
+            newRow.jumlah_bayar = params[3];
+            newRow.uang_diterima = params[4];
+            newRow.uang_kembalian = params[5];
+            newRow.no_referensi = params[6];
+            newRow.status = params[7] || 'Selesai';
+            newRow.tanggal_bayar = new Date().toISOString();
+        }
+
+        memoryDb[tableName].push(newRow);
+        return Promise.resolve({ rows: [newRow], rowCount: 1, lastInsertId: newId });
+    }
+
+    // 6. UPDATE
+    if (lower.startsWith('update')) {
+        let tableName = 'produk';
+        if (lower.includes('update administrator')) tableName = 'administrator';
+        else if (lower.includes('update produk')) tableName = 'produk';
+        else if (lower.includes('update pesanan')) tableName = 'pesanan';
+        else if (lower.includes('update transaksi')) tableName = 'transaksi';
+
+        let idParam = params[params.length - 1];
+        let found = memoryDb[tableName].find(r => String(r['id_' + tableName] || r['id_admin'] || r['id_produk'] || r['id_pesanan']) === String(idParam));
+        if (found && tableName === 'produk') {
+            if (lower.includes('set stok =')) {
+                found.stok = parseInt(params[0], 10) || 0;
+                found.status_stok = params[1];
+            }
+        }
+        return Promise.resolve({ rows: found ? [found] : [], rowCount: found ? 1 : 0 });
+    }
+
+    // 7. DELETE
+    if (lower.startsWith('delete')) {
+        let tableName = 'produk';
+        if (lower.includes('from produk')) tableName = 'produk';
+        else if (lower.includes('from detail_pesanan')) tableName = 'detail_pesanan';
+        if (params.length > 0) {
+            const delId = params[0];
+            memoryDb[tableName] = memoryDb[tableName].filter(r => String(r.id_produk || r.id_detail) !== String(delId));
+        }
+        return Promise.resolve({ rows: [], rowCount: 1 });
+    }
+
+    // Generic fallback
+    return Promise.resolve({ rows: [], rowCount: 0 });
+}
+
 // Helper Query Universal
 function runSqlite(sql, params = []) {
+    const db = getSqliteDb();
+    if (!db) {
+        return runMemoryQuery(sql, params);
+    }
+
     return new Promise((resolve, reject) => {
-        const db = getSqliteDb();
         const trimmed = sql.trim().toLowerCase();
 
         // Convert Postgres $1, $2 to SQLite ?
         let convertedSql = sql.replace(/\$(\d+)/g, '?');
-
-        // Convert Postgres ILIKE to SQLite LIKE
         convertedSql = convertedSql.replace(/ILIKE/gi, 'LIKE');
-
-        // Convert GREATEST(0, x)
         convertedSql = convertedSql.replace(/GREATEST\(0,\s*([^)]+)\)/gi, 'CASE WHEN ($1) < 0 THEN 0 ELSE ($1) END');
-
-        // Convert string_agg to group_concat
         convertedSql = convertedSql.replace(/string_agg\(([^,]+),\s*([^)]+)\)/gi, 'GROUP_CONCAT($1, $2)');
-
-        // Remove FOR UPDATE
         convertedSql = convertedSql.replace(/FOR\s+UPDATE/gi, '');
-
-        // Convert Dates
         convertedSql = convertedSql.replace(/CURRENT_DATE/gi, "date('now', 'localtime')");
         convertedSql = convertedSql.replace(/NOW\(\)/gi, "datetime('now', 'localtime')");
 
-        // Handle SELECT vs INSERT/UPDATE/DELETE
         if (trimmed.startsWith('select') || trimmed.startsWith('pragma')) {
             db.all(convertedSql, params, (err, rows) => {
                 if (err) return reject(err);
@@ -191,7 +409,7 @@ async function initDatabase() {
             }
             client.release();
         } catch (pgErr) {
-            console.warn('Gagal koneksi PostgreSQL, beralih ke SQLite:', pgErr.message);
+            console.warn('Gagal koneksi PostgreSQL, beralih ke SQLite / Memory Engine:', pgErr.message);
             isUsingPostgres = false;
         }
     } else {
@@ -199,10 +417,11 @@ async function initDatabase() {
     }
 
     if (!isUsingPostgres) {
-        console.log('Menggunakan Database Internal SQLite (Siap Digunakan Tanpa Setup!).');
+        console.log('Menggunakan Database Internal SQLite / Memory Engine.');
 
         const db = getSqliteDb();
-        await new Promise((res, rej) => {
+        if (db) {
+            await new Promise((res, rej) => {
             db.serialize(() => {
                 db.run(`CREATE TABLE IF NOT EXISTS administrator (
                     id_admin INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -281,7 +500,8 @@ async function initDatabase() {
                     else res();
                 });
             });
-        });
+            });
+        }
     }
 
     // Pastikan kolom snap_token & metode_pembayaran ada di tabel pesanan

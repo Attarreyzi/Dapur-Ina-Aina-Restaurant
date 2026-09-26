@@ -96,7 +96,7 @@ app.use((err, req, res, next) => {
 });
 
 // Start Server & Initialize Database
-if (process.env.VERCEL !== '1') {
+if (require.main === module) {
     app.listen(PORT, async () => {
         console.log('==========================================================');
         console.log(`RESTORAN DAPUR INA AINA SERVER BERJALAN`);
