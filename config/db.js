@@ -184,7 +184,7 @@ async function initDatabase() {
             isUsingPostgres = true;
             console.log('Terhubung ke Database PostgreSQL Cloud!');
 
-            const schemaPath = path.resolve(process.cwd(), 'database', 'schema.sql');
+            const schemaPath = path.join(__dirname, '..', 'database', 'schema.sql');
             if (fs.existsSync(schemaPath)) {
                 const schemaSql = fs.readFileSync(schemaPath, 'utf8');
                 await client.query(schemaSql);
