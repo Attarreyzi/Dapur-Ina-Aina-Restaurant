@@ -170,11 +170,77 @@
         </div>
     </div>
 
-    <!-- Riwayat Transaksi Terakhir -->
+    <!-- Pesanan Masuk & Antrean Meja (Live Menunggu Konfirmasi / Bayar di Kasir) -->
+    <div class="card card-table" style="margin-top: 20px; padding: 0; overflow: hidden; border: 1.5px solid #fde68a;">
+        <div class="card-header"
+            style="padding: 14px 18px; border-bottom: 1px solid #fef3c7; background: #fffbeb; margin-bottom: 0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #eab308; animation: pulse 1.8s infinite;"></span>
+                <h3 style="font-size: 1.05rem; color: #854d0e; margin: 0; font-weight: 800;">
+                    Pesanan Masuk (Menunggu Pembayaran / Kasir)
+                </h3>
+            </div>
+            <span class="stock-badge stock-warning" style="font-size: 0.8rem; font-weight: 800; padding: 4px 12px;">
+                <%= (stats.pending_orders && stats.pending_orders.length) || stats.total_menunggu || 0 %> Pesanan Aktif
+            </span>
+        </div>
+
+        <div class="table-responsive">
+            <table class="custom-table">
+                <thead>
+                    <tr>
+                        <th>No. Pesanan</th>
+                        <th>Waktu Pesan</th>
+                        <th>Pelanggan & Meja</th>
+                        <th>Rincian Menu</th>
+                        <th>Status</th>
+                        <th>Total Tagihan</th>
+                        <th>Aksi Kasir</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (stats.pending_orders && stats.pending_orders.length > 0) { %>
+                        <% stats.pending_orders.forEach(p => { %>
+                            <tr style="background: #fffdf5;">
+                                <td><strong style="color: var(--text-main);"><%= p.no_pesanan %></strong></td>
+                                <td><%= formatDate(p.waktu_pesan) %></td>
+                                <td>
+                                    <div><strong style="color: #0f172a;"><%= p.nama_pelanggan || 'Pelanggan Meja' %></strong></div>
+                                    <div style="font-size: 0.78rem; font-weight: 700; color: #b45309;"><%= p.nomor_meja %></div>
+                                </td>
+                                <td style="max-width: 260px; font-size: 0.84rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="<%= p.rincian_menu %>">
+                                    <%= p.rincian_menu || '-' %>
+                                </td>
+                                <td>
+                                    <span class="stock-badge stock-warning" style="font-size: 0.76rem; font-weight: 800;">
+                                        Menunggu Konfirmasi
+                                    </span>
+                                </td>
+                                <td><strong style="color: var(--primary);"><%= formatRupiah(p.total_tagihan) %></strong></td>
+                                <td>
+                                    <a href="/billing/<%= p.id_pesanan %>" class="btn btn-warning btn-sm" style="font-weight: 800; padding: 5px 12px; font-size: 0.82rem; white-space: nowrap;">
+                                        Proses Bayar →
+                                    </a>
+                                </td>
+                            </tr>
+                        <% }); %>
+                    <% } else { %>
+                        <tr>
+                            <td colspan="7" style="text-align: center; color: var(--text-dim); padding: 28px;">
+                                Tidak ada antrean pesanan yang menunggu pembayaran.
+                            </td>
+                        </tr>
+                    <% } %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Riwayat Transaksi Terakhir Selesai -->
     <div class="card card-table" style="margin-top: 20px; padding: 0; overflow: hidden;">
         <div class="card-header"
             style="padding: 14px 18px; border-bottom: 1px solid var(--border-light); margin-bottom: 0;">
-            <h3 style="font-size: 1.05rem; color: var(--text-main);">Transaksi Terakhir</h3>
+            <h3 style="font-size: 1.05rem; color: var(--text-main);">Transaksi Terakhir Selesai</h3>
         </div>
 
         <div class="table-responsive">
@@ -234,7 +300,7 @@
 
         <!-- Link di Bagian Bawah Kotak -->
         <div style="padding: 12px 18px; border-top: 1px solid var(--border-light); background: #fafafa; text-align: center;">
-            <a href="/riwayat" class="card-footer-link">Lihat Semua Riwayat →</a>
+            <a href="/riwayat" class="card-footer-link">Lihat Semua Riwayat Pesanan →</a>
         </div>
     </div>
 

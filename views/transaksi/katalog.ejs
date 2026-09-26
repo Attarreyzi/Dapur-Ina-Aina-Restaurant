@@ -1,5 +1,19 @@
 <%- include('../partials/header') %>
 
+    <% if (typeof pendingCount !== 'undefined' && pendingCount > 0) { %>
+    <div style="margin-bottom: 16px; padding: 12px 16px; background: #fffbeb; border: 1.5px solid #fde68a; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #eab308; animation: pulse 1.8s infinite;"></span>
+            <span style="font-size: 0.88rem; font-weight: 800; color: #854d0e;">
+                Ada <%= pendingCount %> pesanan meja masuk yang menunggu pembayaran / konfirmasi!
+            </span>
+        </div>
+        <a href="/riwayat" class="btn btn-warning btn-sm" style="font-weight: 800; padding: 6px 14px; font-size: 0.82rem;">
+            Buka Riwayat Pesanan →
+        </a>
+    </div>
+    <% } %>
+
     <div style="display: grid; grid-template-columns: 1fr; gap: 20px;" class="pos-layout-grid">
         <!-- Left Column: Menu Catalog Grid -->
         <div style="min-width: 0; max-width: 100%; box-sizing: border-box;">

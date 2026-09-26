@@ -1,10 +1,20 @@
+const { query } = require('../config/db');
+
 /**
  * Helper Middleware untuk View EJS
  */
-function setupLocals(req, res, next) {
+async function setupLocals(req, res, next) {
     // Current user / admin session
     res.locals.admin = req.session ? req.session.admin : null;
     res.locals.currentPath = req.path;
+    res.locals.pendingOrdersCount = 0;
+
+    if (res.locals.admin) {
+        try {
+            const pendingRes = await query("SELECT COUNT(*) as count FROM pesanan WHERE status = 'Menunggu'");
+            res.locals.pendingOrdersCount = parseInt(pendingRes.rows[0].count, 10) || 0;
+        } catch (_) { }
+    }
 
     // Flash Messages
     res.locals.flash_success = req.session ? req.session.flash_success : null;

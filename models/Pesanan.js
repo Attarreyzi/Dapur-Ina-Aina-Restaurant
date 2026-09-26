@@ -301,7 +301,7 @@ class Pesanan {
             LIMIT 3
         `);
 
-        // Riwayat 5 Transaksi Terbaru
+        // Riwayat Transaksi Selesai Terbaru
         const recentTransRes = await query(`
             SELECT 
                 t.id_transaksi,
@@ -316,6 +316,30 @@ class Pesanan {
             LEFT JOIN pelanggan c ON p.id_pelanggan = c.id_pelanggan
             ORDER BY t.tanggal_bayar DESC
             LIMIT 6
+        `);
+
+        // Daftar Pesanan Baru yang Menunggu Konfirmasi / Pembayaran (Live Antrean)
+        const pendingOrdersRes = await query(`
+            SELECT 
+                p.id_pesanan,
+                p.tanggal AS waktu_pesan,
+                p.total AS total_tagihan,
+                p.status AS status_pesanan,
+                p.nomor_meja,
+                p.catatan,
+                c.nama AS nama_pelanggan,
+                c.no_telepon,
+                (
+                    SELECT string_agg(CONCAT(pr.nama_produk, ' (', dp.jumlah, ')'), ', ')
+                    FROM detail_pesanan dp
+                    JOIN produk pr ON dp.id_produk = pr.id_produk
+                    WHERE dp.id_pesanan = p.id_pesanan
+                ) AS rincian_menu
+            FROM pesanan p
+            LEFT JOIN pelanggan c ON p.id_pelanggan = c.id_pelanggan
+            WHERE p.status = 'Menunggu'
+            ORDER BY p.id_pesanan DESC
+            LIMIT 10
         `);
 
         // 1. Data Grafik 7 Hari Terakhir (Mingguan)
@@ -386,6 +410,11 @@ class Pesanan {
                 ...m,
                 total_terjual: parseInt(m.total_terjual, 10) || 0,
                 total_omset: parseFloat(m.total_omset) || 0
+            })),
+            pending_orders: pendingOrdersRes.rows.map(r => ({
+                ...r,
+                no_pesanan: `ORD-${String(r.id_pesanan).padStart(5, '0')}`,
+                total_tagihan: parseFloat(r.total_tagihan) || 0
             })),
             recent_transaksi: recentTransRes.rows.map(r => ({
                 ...r,

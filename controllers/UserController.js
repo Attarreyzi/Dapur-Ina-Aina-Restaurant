@@ -159,6 +159,24 @@ class UserController {
                 return res.redirect('/menu');
             }
 
+            // Auto-konfirmasi jika redirect kembali dari Midtrans (payment=success atau settlement)
+            const paymentSuccess = req.query.payment === 'success' || req.query.transaction_status === 'settlement' || req.query.transaction_status === 'capture';
+            if (paymentSuccess && order.status_pesanan !== 'Selesai') {
+                try {
+                    const Pembayaran = require('../models/Pembayaran');
+                    const refNo = req.query.order_id || req.query.transaction_id || `MID-${order.id_pesanan}-${Date.now().toString().slice(-4)}`;
+                    await Pembayaran.prosesPembayaran({
+                        id_pesanan: order.id_pesanan,
+                        metode_pembayaran: 'non_tunai',
+                        uang_diterima: order.total_harga,
+                        no_referensi: refNo
+                    });
+                    order.status_pesanan = 'Selesai';
+                } catch (payErr) {
+                    console.warn('Auto confirm pesanan failed:', payErr.message);
+                }
+            }
+
             // Jika pesanan masih Menunggu dan belum memiliki snap_token, buatkan otomatis
             if (order.status_pesanan === 'Menunggu' && !order.snap_token) {
                 try {

@@ -1,14 +1,29 @@
 <%- include('../partials/header') %>
 
 
-    <!-- Top Action Bar: Search Riwayat (Format Seragam Seperti Laporan & Stok) -->
+    <!-- Top Action Bar: Search & Status Filter (Semua, Menunggu, Selesai) -->
     <div class="card action-bar-card" style="margin-bottom: 18px; padding: 14px 18px;">
-        <div style="position: relative;">
-            <input type="text" id="searchRiwayat" class="form-control" placeholder="Cari No. Pesanan / nama pelanggan / meja..." style="height: 40px; font-size: 0.9rem; padding-left: 38px; border-radius: var(--radius-md); width: 100%;">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); pointer-events: none;">
-                <circle cx="11" cy="11" r="8"></circle>
-                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-            </svg>
+        <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+            <div style="position: relative; flex: 1; min-width: 240px;">
+                <input type="text" id="searchRiwayat" class="form-control" placeholder="Cari No. Pesanan / nama pelanggan / meja..." style="height: 40px; font-size: 0.9rem; padding-left: 38px; border-radius: var(--radius-md); width: 100%;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); pointer-events: none;">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+            </div>
+
+            <!-- Filter Status Tab -->
+            <div style="display: inline-flex; background: var(--bg-input); padding: 4px; border-radius: var(--radius-md); border: 1px solid var(--border-light); gap: 4px;">
+                <button type="button" class="btn-chart-filter active" id="filterAll" onclick="filterByStatus('all')">
+                    Semua
+                </button>
+                <button type="button" class="btn-chart-filter" id="filterPending" onclick="filterByStatus('menunggu')" style="color: #b45309;">
+                    Menunggu (<%= (listTransaksi || []).filter(t => t.status_pesanan === 'Menunggu').length %>)
+                </button>
+                <button type="button" class="btn-chart-filter" id="filterSuccess" onclick="filterByStatus('selesai')" style="color: #15803d;">
+                    Selesai (<%= (listTransaksi || []).filter(t => t.status_pesanan === 'Selesai').length %>)
+                </button>
+            </div>
         </div>
     </div>
 
@@ -31,17 +46,17 @@
                 <tbody id="riwayatTableBody">
                     <tr id="emptyRiwayatRow" style="display: none;">
                         <td colspan="8" style="text-align: center; color: var(--text-dim); padding: 32px;">
-                            Tidak ada riwayat pesanan yang sesuai dengan pencarian.
+                            Tidak ada riwayat pesanan yang sesuai dengan filter atau pencarian.
                         </td>
                     </tr>
                     <% if (listTransaksi && listTransaksi.length > 0) { %>
                         <% listTransaksi.forEach(t => { %>
-                            <tr>
+                            <tr data-status="<%= (t.status_pesanan || '').toLowerCase() %>" class="order-row">
                                 <td><strong style="color: var(--text-main);"><%= t.no_pesanan %></strong></td>
                                 <td><%= formatDate(t.tanggal_bayar) %></td>
                                 <td>
                                     <div><strong><%= t.nama_pelanggan || 'Umum' %></strong></div>
-                                    <div style="font-size: 0.78rem; color: var(--text-dim);"><%= t.nomor_meja %> (<%= t.alamat || 'Dine In' %>)</div>
+                                    <div style="font-size: 0.78rem; font-weight: 700; color: #b45309;"><%= t.nomor_meja %> (<%= t.alamat || 'Dine In' %>)</div>
                                 </td>
                                 <td style="max-width: 250px; font-size: 0.85rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="<%= t.rincian_menu %>">
                                     <%= t.rincian_menu || '-' %>
@@ -57,7 +72,7 @@
                                     <% if (t.status_pesanan === 'Selesai') { %>
                                         <span class="stock-badge stock-tersedia" style="font-size: 0.75rem;">Selesai</span>
                                     <% } else { %>
-                                        <span class="stock-badge stock-warning" style="font-size: 0.75rem;">Menunggu Konfirmasi</span>
+                                        <span class="stock-badge stock-warning" style="font-size: 0.75rem; font-weight: 800;">Menunggu Konfirmasi</span>
                                     <% } %>
                                 </td>
                                 <td><strong style="color: var(--text-main);"><%= formatRupiah(t.jumlah_bayar) %></strong></td>
@@ -68,7 +83,7 @@
                                                 Struk
                                             </a>
                                         <% } else { %>
-                                            <a href="/billing/<%= t.id_pesanan %>" class="btn btn-warning btn-sm" style="font-weight: 700; padding: 4px 6px; font-size: 0.78rem; text-align: center; justify-content: center; width: 100%;">
+                                            <a href="/billing/<%= t.id_pesanan %>" class="btn btn-warning btn-sm" style="font-weight: 800; padding: 4px 6px; font-size: 0.78rem; text-align: center; justify-content: center; width: 100%;">
                                                 Konfirmasi
                                             </a>
                                         <% } %>
@@ -94,25 +109,56 @@
     </div>
 
     <script>
-        document.getElementById('searchRiwayat')?.addEventListener('input', function(e) {
-            const val = e.target.value.toLowerCase().trim();
-            const rows = document.querySelectorAll('#riwayatTableBody tr');
+        let currentStatusFilter = 'all';
+
+        function applyFilter() {
+            const searchVal = (document.getElementById('searchRiwayat')?.value || '').toLowerCase().trim();
+            const rows = document.querySelectorAll('#riwayatTableBody tr.order-row');
             let hasVisible = false;
+
             rows.forEach(r => {
-                if (r.id === 'emptyRiwayatRow') return;
+                const status = r.getAttribute('data-status') || '';
                 const text = r.textContent.toLowerCase();
-                if (text.includes(val)) {
+                const matchSearch = !searchVal || text.includes(searchVal);
+                const matchStatus = (currentStatusFilter === 'all') || (status === currentStatusFilter);
+
+                if (matchSearch && matchStatus) {
                     r.style.display = '';
                     hasVisible = true;
                 } else {
                     r.style.display = 'none';
                 }
             });
+
             const emptyRow = document.getElementById('emptyRiwayatRow');
             if (emptyRow) {
                 emptyRow.style.display = hasVisible ? 'none' : '';
             }
-        });
+        }
+
+        window.filterByStatus = function(status) {
+            currentStatusFilter = status;
+            document.querySelectorAll('.btn-chart-filter').forEach(b => b.classList.remove('active'));
+            if (status === 'all') document.getElementById('filterAll')?.classList.add('active');
+            if (status === 'menunggu') document.getElementById('filterPending')?.classList.add('active');
+            if (status === 'selesai') document.getElementById('filterSuccess')?.classList.add('active');
+            applyFilter();
+        };
+
+        document.getElementById('searchRiwayat')?.addEventListener('input', applyFilter);
+
+        // Auto Refresh Riwayat secara halus setiap 12 detik jika kasir sedang idle
+        let idleTimer;
+        let isTyping = false;
+        document.getElementById('searchRiwayat')?.addEventListener('focus', () => isTyping = true);
+        document.getElementById('searchRiwayat')?.addEventListener('blur', () => isTyping = false);
+
+        setInterval(() => {
+            if (!isTyping && currentStatusFilter === 'all' && !(document.getElementById('searchRiwayat')?.value)) {
+                // Refresh riwayat data
+                window.location.reload();
+            }
+        }, 12000);
     </script>
 
     <%- include('../partials/footer') %>

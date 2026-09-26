@@ -22,13 +22,16 @@ class TransaksiController {
             });
 
             const categories = Kategori.getAll();
+            const pendingOrders = await Pesanan.getAll({ status: 'Menunggu' });
+            const pendingCount = pendingOrders ? pendingOrders.length : 0;
 
             res.render('transaksi/katalog', {
                 title: 'Kasir POS - Dapur Ina',
                 produkList,
                 categories,
                 kategoriFilter,
-                search
+                search,
+                pendingCount
             });
         } catch (err) {
             req.session.flash_error = 'Gagal memuat katalog kasir: ' + err.message;
