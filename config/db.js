@@ -267,7 +267,7 @@ const memoryDb = {
             nama: 'Administrator Dapur Ina',
             email: 'admin@dapurina.com',
             // bcrypt hash of 'admin123'
-            password: '$2a$10$w8TfJ3jCqLhD0kS6hPq1yO91fO2P6Ld4YqP1k8V3U5j9s.9J5lF7y',
+            password: '$2a$10$xhWMfsyyDADChK2wXmHmneoaoj//ttZbBcVgB9kkOAUodeWBIx2M6',
             created_at: new Date().toISOString()
         }
     ],
