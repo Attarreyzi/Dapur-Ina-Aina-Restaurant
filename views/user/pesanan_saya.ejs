@@ -1,0 +1,461 @@
+<%- include('../partials/header') %>
+
+    <!-- Midtrans Snap Script -->
+    <script src="<%= midtransSnapUrl %>" data-client-key="<%= midtransClientKey %>"></script>
+
+    <div style="max-width: 600px; margin: 0 auto; padding-bottom: 90px;">
+        <div
+            style="margin-bottom: 18px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+            <a href="/menu" class="btn btn-secondary btn-sm"
+                style="display: inline-flex; align-items: center; gap: 6px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m15 18-6-6 6-6"></path>
+                </svg>
+                <span>Kembali ke Menu</span>
+            </a>
+            <% if (order.status_pesanan==='Selesai' ) { %>
+                <span class="stock-badge stock-tersedia"
+                    style="font-size: 0.82rem; padding: 6px 14px; font-weight: 800;">
+                    Selesai
+                </span>
+                <% } else { %>
+                    <span class="stock-badge stock-warning"
+                        style="font-size: 0.82rem; padding: 6px 14px; font-weight: 800;">
+                        Menunggu Pembayaran
+                    </span>
+                    <% } %>
+        </div>
+
+        <div class="card pesanan-detail-card"
+            style="box-shadow: var(--shadow-sm); border-radius: var(--radius-xl); padding: 22px;">
+            <!-- Header Rincian Pesanan -->
+            <div
+                style="text-align: center; padding-bottom: 18px; border-bottom: 1px dashed var(--border-light); margin-bottom: 18px;">
+                <div
+                    style="font-size: 0.76rem; color: var(--primary); text-transform: uppercase; font-weight: 800; letter-spacing: 0.06em; margin-bottom: 4px;">
+                    Nomor Pesanan
+                </div>
+                <h2
+                    style="font-size: 1.65rem; font-weight: 800; margin-bottom: 4px; color: var(--text-main); letter-spacing: -0.02em;">
+                    <%= order.no_pesanan %>
+                </h2>
+                <div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 4px;">
+                    <%= formatDate(order.waktu_pesan) %>
+                </div>
+            </div>
+
+            <!-- Identitas Pemesan & Lokasi Meja -->
+            <div
+                style="background: var(--bg-input); border-radius: var(--radius-md); padding: 12px 14px; margin-bottom: 18px; border: 1px solid var(--border-light);">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 0.86rem;">
+                    <span style="color: var(--text-muted);">Nomor Meja:</span>
+                    <strong style="color: #0f172a !important; font-weight: 800;">
+                        <%= order.nomor_meja %>
+                    </strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 0.86rem;">
+                    <span style="color: var(--text-muted);">Nama Pemesan:</span>
+                    <strong style="color: var(--text-main);">
+                        <%= order.nama_pelanggan || 'Tamu Restoran' %>
+                    </strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.86rem;">
+                    <span style="color: var(--text-muted);">No. Telepon / WhatsApp:</span>
+                    <strong style="color: var(--text-main);">
+                        <%= order.no_telepon || '-' %>
+                    </strong>
+                </div>
+            </div>
+
+            <!-- Daftar Menu -->
+            <div style="margin-bottom: 18px;">
+                <div
+                    style="font-size: 0.78rem; color: var(--text-muted); text-transform: uppercase; font-weight: 800; letter-spacing: 0.04em; margin-bottom: 10px;">
+                    Daftar Menu
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <% order.items.forEach(item=> { %>
+                        <div class="pesanan-item-row"
+                            style="background: #ffffff; border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 12px 14px; box-shadow: 0 1px 2px rgba(0,0,0,0.02);">
+                            <!-- Baris Nama Menu: Full width agar varian/pcs selalu sejajar & tidak terpotong -->
+                            <div
+                                style="font-weight: 800; font-size: 0.94rem; color: var(--text-main); line-height: 1.35; margin-bottom: 6px;">
+                                <%= item.nama_produk %>
+                            </div>
+
+                            <!-- Baris Kuantitas dan Harga Subtotal -->
+                            <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+                                <div
+                                    style="font-size: 0.8rem; color: var(--text-muted); display: flex; align-items: center; gap: 6px;">
+                                    <span
+                                        style="font-weight: 700; color: var(--text-main); background: var(--bg-input); padding: 2px 8px; border-radius: 4px; font-size: 0.78rem;">
+                                        <%= item.jumlah %> porsi
+                                    </span>
+                                </div>
+                                <div
+                                    style="font-weight: 800; font-size: 0.96rem; color: var(--primary); white-space: nowrap !important; text-align: right; flex-shrink: 0;">
+                                    <%= formatRupiah(item.subtotal) %>
+                                </div>
+                            </div>
+                        </div>
+                        <% }); %>
+                </div>
+            </div>
+
+            <% const cleanDisplayCatatan=(order.catatan || '' ).replace(/\[Metode:[^\]]+\]/gi, '' ).trim(); %>
+                <% if (cleanDisplayCatatan) { %>
+                    <div
+                        style="padding: 12px; background: #fff7ed; border: 1px solid #fed7aa; border-radius: var(--radius-md); margin-bottom: 18px; font-size: 0.84rem; color: #9a3412;">
+                        <strong>Catatan Khusus:</strong>
+                        <%= cleanDisplayCatatan %>
+                    </div>
+                    <% } %>
+
+                        <!-- Total Tagihan -->
+                        <div class="cart-bill-summary" style="margin-bottom: 20px;">
+                            <div class="bill-row bill-total-row" style="border-top: none; padding-top: 0;">
+                                <span style="font-size: 1.05rem;">Total Tagihan</span>
+                                <span class="bill-total-price" style="white-space: nowrap !important;">
+                                    <%= formatRupiah(order.total_harga) %>
+                                </span>
+                            </div>
+                        </div>
+
+                        <% if (order.status_pesanan==='Selesai' ) { %>
+                            <!-- Status Lunas -->
+                            <div
+                                style="padding: 14px 16px; background: #ecfdf5; border: 1.5px solid #a7f3d0; border-radius: var(--radius-lg); color: #065f46; font-size: 0.94rem; font-weight: 800; text-align: center; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                                <span>Pembayaran Berhasil Diselesaikan</span>
+                            </div>
+                            <% } else { %>
+                                <!-- Bagian Pilihan Metode Pembayaran (Muncul Setelah Pesanan Dikirim) -->
+                                <div
+                                    style="margin-top: 8px; padding-top: 18px; border-top: 1px dashed var(--border-light);">
+                                    <div
+                                        style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; font-weight: 800; letter-spacing: 0.05em; margin-bottom: 12px; text-align: center;">
+                                        Pilih Metode Pembayaran
+                                    </div>
+
+                                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                                        <!-- Opsi 1: QRIS Online (Paling Cepat & Praktis) -->
+                                        <button type="button" class="btn btn-primary btn-block btn-lg"
+                                            id="btnPayMidtrans" onclick="payWithMidtrans()"
+                                            style="height: 50px; font-weight: 800; font-size: 0.96rem; box-shadow: 0 4px 14px rgba(194, 65, 12, 0.35); display: flex; align-items: center; justify-content: center; gap: 10px;">
+                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+                                                stroke="currentColor" stroke-width="2.2" stroke-linecap="round"
+                                                stroke-linejoin="round">
+                                                <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+                                                <line x1="1" y1="10" x2="23" y2="10"></line>
+                                            </svg>
+                                            <span>BAYAR VIA QRIS</span>
+                                        </button>
+                                        <div
+                                            style="text-align: center; color: var(--text-muted); font-size: 0.78rem; line-height: 1.35; margin-top: -3px;">
+                                        </div>
+
+                                        <!-- Divider Pemisah Kasir -->
+                                        <div style="display: flex; align-items: center; gap: 10px; margin: 6px 0 2px;">
+                                            <div style="flex: 1; height: 1px; background: var(--border-light);"></div>
+                                            <span
+                                                style="font-size: 0.72rem; color: var(--text-muted); font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em;">Atau
+                                                Bayar di Kasir</span>
+                                            <div style="flex: 1; height: 1px; background: var(--border-light);"></div>
+                                        </div>
+
+                                        <!-- Opsi 2: Tunai di Kasir -->
+                                        <button type="button" class="btn btn-secondary btn-block"
+                                            onclick="openModal('modalInfoTunai')"
+                                            style="height: 46px; font-weight: 700; font-size: 0.92rem; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                                                stroke="currentColor" stroke-width="2.2" stroke-linecap="round"
+                                                stroke-linejoin="round">
+                                                <rect x="2" y="6" width="20" height="12" rx="2"></rect>
+                                                <circle cx="12" cy="12" r="2"></circle>
+                                                <path d="M6 12h.01M18 12h.01"></path>
+                                            </svg>
+                                            <span>Bayar Tunai</span>
+                                        </button>
+
+                                        <!-- Opsi 3: Debit di Kasir -->
+                                        <button type="button" class="btn btn-secondary btn-block"
+                                            onclick="openModal('modalInfoDebit')"
+                                            style="height: 46px; font-weight: 700; font-size: 0.92rem; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                                                stroke="currentColor" stroke-width="2.2" stroke-linecap="round"
+                                                stroke-linejoin="round">
+                                                <rect x="2" y="5" width="20" height="14" rx="2"></rect>
+                                                <line x1="2" y1="10" x2="22" y2="10"></line>
+                                            </svg>
+                                            <span>Bayar Kartu Debit</span>
+                                        </button>
+                                    </div>
+                                </div>
+                                <% } %>
+        </div>
+    </div>
+
+    <!-- Modal Panduan Bayar Tunai -->
+    <div class="modal-overlay" id="modalInfoTunai">
+        <div class="modal-box" style="max-width: 420px; padding: 24px; text-align: center;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+                <div style="font-weight: 800; font-size: 1.05rem; color: var(--text-main);">
+                    Pembayaran Tunai
+                </div>
+                <button type="button" onclick="closeModal('modalInfoTunai')"
+                    style="background:none; border:none; font-size:1.2rem; cursor:pointer;">✕</button>
+            </div>
+
+            <div
+                style="padding: 16px; background: #fff7ed; border-radius: var(--radius-md); border: 1.5px solid #fed7aa; margin-bottom: 16px;">
+                <div style="font-size: 0.8rem; color: #9a3412;">Total Tagihan Tunai:</div>
+                <div style="font-size: 1.55rem; font-weight: 800; color: #c2410c; margin: 4px 0 8px;">
+                    <%= formatRupiah(order.total_harga) %>
+                </div>
+                <div style="font-size: 0.82rem; color: var(--text-body);">
+                    Nomor Pesanan: <strong>
+                        <%= order.no_pesanan %>
+                    </strong> - <strong>
+                        <%= order.nomor_meja %>
+                    </strong>
+                </div>
+            </div>
+
+            <p
+                style="font-size: 0.86rem; color: var(--text-body); line-height: 1.5; margin-bottom: 20px; text-align: left;">
+                Silahkan menuju meja kasir dan sebutkan <strong>nomor pesanan</strong> atau <strong>nomor meja</strong>
+                Anda untuk menyerahkan uang tunai.
+            </p>
+
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+                <button type="button" class="btn btn-secondary btn-block"
+                    onclick="closeModal('modalInfoTunai'); payWithMidtrans();"
+                    style="font-size: 0.86rem; font-weight: 700;">
+                    Atau Beralih Bayar via QRIS Online
+                </button>
+                <button type="button" class="btn btn-primary btn-block" onclick="closeModal('modalInfoTunai')"
+                    style="font-weight: 800;">
+                    Mengerti
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Panduan Bayar Kartu Debit di Kasir -->
+    <div class="modal-overlay" id="modalInfoDebit">
+        <div class="modal-box" style="max-width: 420px; padding: 24px; text-align: center;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+                <div style="font-weight: 800; font-size: 1.05rem; color: var(--text-main);">
+                    Pembayaran Kartu Debit di Kasir
+                </div>
+                <button type="button" onclick="closeModal('modalInfoDebit')"
+                    style="background:none; border:none; font-size:1.2rem; cursor:pointer;">✕</button>
+            </div>
+
+            <div
+                style="padding: 16px; background: #eff6ff; border-radius: var(--radius-md); border: 1.5px solid #bfdbfe; margin-bottom: 16px;">
+                <div style="font-size: 0.8rem; color: #1e40af;">Total Tagihan Debit:</div>
+                <div style="font-size: 1.55rem; font-weight: 800; color: #2563eb; margin: 4px 0 8px;">
+                    <%= formatRupiah(order.total_harga) %>
+                </div>
+                <div style="font-size: 0.82rem; color: var(--text-body);">
+                    Nomor Pesanan: <strong>
+                        <%= order.no_pesanan %>
+                    </strong> - <strong>
+                        <%= order.nomor_meja %>
+                    </strong>
+                </div>
+            </div>
+
+            <p
+                style="font-size: 0.86rem; color: var(--text-body); line-height: 1.5; margin-bottom: 20px; text-align: left;">
+                Silahkan menuju meja kasir dan siapkan kartu debit Anda untuk melakukan pembayaran.
+            </p>
+
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+                <button type="button" class="btn btn-secondary btn-block"
+                    onclick="closeModal('modalInfoDebit'); payWithMidtrans();"
+                    style="font-size: 0.86rem; font-weight: 700;">
+                    Atau Beralih Bayar via QRIS Online
+                </button>
+                <button type="button" class="btn btn-primary btn-block" onclick="closeModal('modalInfoDebit')"
+                    style="font-weight: 800;">
+                    Mengerti
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Simulasi Midtrans (Sandbox Fallback Mode) -->
+    <div class="modal-overlay" id="midtransMockModal">
+        <div class="modal-box" style="max-width: 440px; padding: 24px; text-align: center;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+                <div
+                    style="font-weight: 800; font-size: 1.1rem; color: var(--text-main); display: flex; align-items: center; gap: 8px;">
+                    <span>Midtrans Payment Simulator</span>
+                </div>
+                <button type="button" onclick="closeModal('midtransMockModal')"
+                    style="background:none; border:none; font-size:1.2rem; cursor:pointer;">✕</button>
+            </div>
+
+            <div
+                style="padding: 16px; background: #f8fafc; border-radius: var(--radius-md); border: 1px solid var(--border-light); margin-bottom: 18px;">
+                <div style="font-size: 0.8rem; color: var(--text-muted);">Total Tagihan:</div>
+                <div style="font-size: 1.5rem; font-weight: 800; color: var(--primary); margin: 4px 0 8px;">
+                    <%= formatRupiah(order.total_harga) %>
+                </div>
+                <div style="font-size: 0.78rem; color: var(--text-body);">
+                    Pesanan: <strong>
+                        <%= order.no_pesanan %>
+                    </strong> - <%= order.nomor_meja %>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 20px; text-align: left;">
+                <label class="form-label" style="font-size: 0.84rem;">Pilih Saluran Pembayaran:</label>
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <label
+                        style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--border-light); border-radius: var(--radius-md); cursor: pointer; background: #ffffff;">
+                        <input type="radio" name="mockChannel" value="qris" checked>
+                        <div>
+                            <div style="font-weight: 700; font-size: 0.88rem;">QRIS (GoPay, OVO, Dana, LinkAja)</div>
+                            <div style="font-size: 0.72rem; color: var(--text-muted);">Pindai kode QR</div>
+                        </div>
+                    </label>
+                    <label
+                        style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--border-light); border-radius: var(--radius-md); cursor: pointer; background: #ffffff;">
+                        <input type="radio" name="mockChannel" value="bank_transfer">
+                        <div>
+                            <div style="font-weight: 700; font-size: 0.88rem;">BCA / Mandiri / BRI Virtual Account</div>
+                            <div style="font-size: 0.72rem; color: var(--text-muted);">Transfer nomor VA otomatis</div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <button type="button" class="btn btn-primary btn-block" id="btnSimulateSuccess"
+                onclick="simulateMidtransSuccess()" style="height: 44px; font-weight: 800;">
+                ✓ Selesaikan Pembayaran
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let snapToken = '<%= order.snap_token || "" %>';
+        const orderId = <%= order.id_pesanan %>;
+        const isAutoPay = <%= (typeof autoPay !== 'undefined' && autoPay) ? 'true' : 'false' %>;
+
+        async function getSnapToken() {
+            if (snapToken && !snapToken.startsWith('snap_token_mock_')) {
+                return snapToken;
+            }
+
+            try {
+                const res = await fetch(`/api/midtrans/token/${orderId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const data = await res.json();
+                if (data.success && data.token) {
+                    snapToken = data.token;
+                    return snapToken;
+                }
+            } catch (e) {
+                console.warn('Gagal memuat token Midtrans terbaru:', e);
+            }
+            return snapToken;
+        }
+
+        async function payWithMidtrans() {
+            const btn = document.getElementById('btnPayMidtrans');
+            if (btn) btn.disabled = true;
+
+            const token = await getSnapToken();
+
+            if (btn) btn.disabled = false;
+
+            // Jika token adalah mock atau window.snap tidak tersedia (misal offline/sandbox mock)
+            if (!token || token.startsWith('snap_token_mock_') || typeof window.snap === 'undefined') {
+                openModal('midtransMockModal');
+                return;
+            }
+
+            try {
+                window.snap.pay(token, {
+                    onSuccess: function (result) {
+                        processMidtransFinish(result);
+                    },
+                    onPending: function (result) {
+                        processMidtransFinish(result);
+                    },
+                    onError: function (result) {
+                        showToast('error', 'Pembayaran Midtrans gagal atau dibatalkan.');
+                    },
+                    onClose: function () {
+                        console.log('Pelanggan menutup pop-up Midtrans Snap.');
+                    }
+                });
+            } catch (snapErr) {
+                console.error('Error snap.pay:', snapErr);
+                openModal('midtransMockModal');
+            }
+        }
+
+        async function processMidtransFinish(result) {
+            try {
+                const res = await fetch('/api/midtrans/finish', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        id_pesanan: orderId,
+                        result: result || {}
+                    })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    window.location.href = data.redirect || `/pesanan/${orderId}?payment=success`;
+                } else {
+                    showToast('error', 'Gagal mengonfirmasi status pembayaran: ' + (data.message || 'Error'));
+                }
+            } catch (e) {
+                console.error('Error finish callback:', e);
+                window.location.reload();
+            }
+        }
+
+        function simulateMidtransSuccess() {
+            const selectedChannel = document.querySelector('input[name="mockChannel"]:checked')?.value || 'qris';
+            const mockResult = {
+                transaction_id: 'TRX-MID-' + Date.now(),
+                order_id: 'INA-' + orderId + '-' + Date.now().toString().slice(-4),
+                payment_type: selectedChannel,
+                status_code: '200',
+                transaction_status: 'settlement'
+            };
+            closeModal('midtransMockModal');
+            processMidtransFinish(mockResult);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Bersihkan menu di keranjang belanja pelanggan begitu pesanan berhasil dibuat
+            try {
+                if (typeof POS_CART !== 'undefined' && POS_CART.clear) {
+                    POS_CART.clear();
+                } else {
+                    localStorage.removeItem('dapur_ina_cart');
+                }
+            } catch (e) { }
+
+            if (isAutoPay) {
+                setTimeout(() => {
+                    payWithMidtrans();
+                }, 600);
+            }
+        });
+    </script>
+
+    <%- include('../partials/footer') %>

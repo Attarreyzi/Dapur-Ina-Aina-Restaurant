@@ -1,0 +1,222 @@
+<%- include('../partials/header') %>
+
+<!-- Top Action Bar: Search & Tambah Menu Baru (Format Seragam Seperti Laporan) -->
+<div class="card action-bar-card" style="margin-bottom: 18px; padding: 14px 18px;">
+    <div class="action-bar-inner" style="display: flex; justify-content: space-between; align-items: center; gap: 14px; flex-wrap: wrap;">
+        <div class="action-bar-search" style="flex: 1; min-width: 220px; position: relative;">
+            <input type="text" id="searchStokMenu" class="form-control" placeholder="Cari nama menu atau kategori..." style="height: 40px; font-size: 0.9rem; padding-left: 38px; border-radius: var(--radius-md); width: 100%;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); pointer-events: none;">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+        </div>
+        <div class="action-bar-btn-wrap" style="margin-left: auto; display: flex; justify-content: flex-end;">
+            <button type="button" class="btn btn-primary" onclick="openModal('modalTambahProduk')" style="height: 40px; padding: 0 20px; font-weight: 800; font-size: 0.88rem; border-radius: var(--radius-md); box-shadow: var(--shadow-sm); display: inline-flex; align-items: center; justify-content: center; gap: 8px; white-space: nowrap;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                <span>Tambah Menu Baru</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Product Table -->
+<div class="card card-table" style="padding: 0; overflow: hidden;">
+    <div class="table-responsive">
+        <table class="custom-table">
+            <thead>
+                <tr>
+                    <th>Nama Menu / Produk</th>
+                    <th>Kategori</th>
+                    <th>Harga Jual</th>
+                    <th>Stok Porsi</th>
+                    <th>Status</th>
+                    <th>Aksi</th>
+                </tr>
+            </thead>
+            <tbody id="stokTableBody">
+                <tr id="emptySearchRow" style="display: none;">
+                    <td colspan="6" style="text-align: center; color: var(--text-dim); padding: 32px;">
+                        Tidak ada menu yang sesuai dengan pencarian.
+                    </td>
+                </tr>
+                <% if (produkList && produkList.length > 0) { %>
+                    <% produkList.forEach(prod => { %>
+                        <tr>
+                            <td>
+                                <div style="font-weight: 700; color: var(--text-main);"><%= prod.nama_produk %></div>
+                                <div style="font-size: 0.78rem; color: var(--text-muted); max-width: 280px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                    <%= prod.deskripsi || '-' %>
+                                </div>
+                            </td>
+                            <td><span class="category-tab-btn" style="padding: 3px 10px; font-size: 0.75rem;"><%= prod.kategori %></span></td>
+                            <td><strong style="color: var(--text-main);"><%= formatRupiah(prod.harga) %></strong></td>
+                            <td>
+                                <form action="/update_stok_quick" method="POST" style="display: inline-flex; align-items: center; gap: 4px;">
+                                    <input type="hidden" name="id_produk" value="<%= prod.id_produk %>">
+                                    <button type="submit" name="new_stok" value="<%= Math.max(0, prod.stok - 1) %>" class="btn btn-secondary btn-sm" style="padding: 1px 7px;">-</button>
+                                    <span style="font-weight: 800; min-width: 28px; text-align: center;"><%= prod.stok %></span>
+                                    <button type="submit" name="new_stok" value="<%= prod.stok + 1 %>" class="btn btn-secondary btn-sm" style="padding: 1px 7px;">+</button>
+                                </form>
+                            </td>
+                            <td>
+                                <span class="stock-badge <%= prod.stok === 0 ? 'stock-habis' : (prod.stok <= 5 ? 'stock-menipis' : 'stock-tersedia') %>">
+                                    <%= prod.stok === 0 ? 'Habis' : (prod.stok <= 5 ? 'Menipis' : 'Tersedia') %>
+                                </span>
+                            </td>
+                            <td>
+                                <div style="display: flex; gap: 6px;">
+                                    <button type="button" class="btn btn-secondary btn-sm" onclick='editProduct(<%= JSON.stringify(prod) %>)'>
+                                        Edit
+                                    </button>
+                                    <a href="/hapus_produk/<%= prod.id_produk %>" class="btn btn-danger btn-sm" onclick="return confirm('Hapus produk <%= prod.nama_produk %>?')">
+                                        Hapus
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    <% }); %>
+                <% } else { %>
+                    <tr>
+                        <td colspan="6" style="text-align: center; color: var(--text-dim); padding: 40px;">
+                            Tidak ada data produk yang sesuai.
+                        </td>
+                    </tr>
+                <% } %>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal Tambah Produk -->
+<div class="modal-overlay" id="modalTambahProduk">
+    <div class="modal-box">
+        <div class="card-header">
+            <h3 style="font-size: 1.15rem; color: var(--text-main);">Tambah Menu Baru</h3>
+            <button type="button" onclick="closeModal('modalTambahProduk')" style="background:none; border:none; color: var(--text-muted); font-size: 1.3rem; cursor: pointer;">✕</button>
+        </div>
+
+        <form action="/simpan_produk" method="POST">
+            <div class="form-group">
+                <label class="form-label">Nama Menu / Produk *</label>
+                <input type="text" name="nama_produk" class="form-control" placeholder="Contoh: Ayam Bakar Taliwang" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Kategori *</label>
+                <select name="id_kategori" class="form-control" required>
+                    <% categories.forEach(cat => { %>
+                        <option value="<%= cat.id %>"><%= cat.nama %></option>
+                    <% }); %>
+                </select>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <div class="form-group">
+                    <label class="form-label">Harga Jual (Rp) *</label>
+                    <input type="number" name="harga" class="form-control" placeholder="28000" min="0" step="500" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Stok Awal (Porsi) *</label>
+                    <input type="number" name="stok" class="form-control" placeholder="30" min="0" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Deskripsi Menu</label>
+                <textarea name="deskripsi" class="form-control" rows="2" placeholder="Keterangan bahan dan bumbu..."></textarea>
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-top: 18px;">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('modalTambahProduk')" style="flex: 1;">Batal</button>
+                <button type="submit" class="btn btn-primary" style="flex: 1;">Simpan Menu</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Edit Produk -->
+<div class="modal-overlay" id="modalEditProduk">
+    <div class="modal-box">
+        <div class="card-header">
+            <h3 style="font-size: 1.15rem; color: var(--text-main);">Edit Data Menu</h3>
+            <button type="button" onclick="closeModal('modalEditProduk')" style="background:none; border:none; color: var(--text-muted); font-size: 1.3rem; cursor: pointer;">✕</button>
+        </div>
+
+        <form action="/update_produk" method="POST">
+            <input type="hidden" name="id_produk" id="edit_id_produk">
+
+            <div class="form-group">
+                <label class="form-label">Nama Menu / Produk *</label>
+                <input type="text" name="nama_produk" id="edit_nama_produk" class="form-control" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Kategori *</label>
+                <select name="id_kategori" id="edit_id_kategori" class="form-control" required>
+                    <% categories.forEach(cat => { %>
+                        <option value="<%= cat.id %>"><%= cat.nama %></option>
+                    <% }); %>
+                </select>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <div class="form-group">
+                    <label class="form-label">Harga Jual (Rp) *</label>
+                    <input type="number" name="harga" id="edit_harga" class="form-control" min="0" step="500" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Stok (Porsi) *</label>
+                    <input type="number" name="stok" id="edit_stok" class="form-control" min="0" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Deskripsi Menu</label>
+                <textarea name="deskripsi" id="edit_deskripsi" class="form-control" rows="2"></textarea>
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-top: 18px;">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('modalEditProduk')" style="flex: 1;">Batal</button>
+                <button type="submit" class="btn btn-primary" style="flex: 1;">Simpan Perubahan</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function editProduct(prod) {
+        document.getElementById('edit_id_produk').value = prod.id_produk;
+        document.getElementById('edit_nama_produk').value = prod.nama_produk;
+        document.getElementById('edit_id_kategori').value = prod.id_kategori || 1;
+        document.getElementById('edit_harga').value = prod.harga;
+        document.getElementById('edit_stok').value = prod.stok;
+        document.getElementById('edit_deskripsi').value = prod.deskripsi || '';
+        openModal('modalEditProduk');
+    }
+
+    // Live search filter
+    document.getElementById('searchStokMenu')?.addEventListener('input', function(e) {
+        const val = e.target.value.toLowerCase().trim();
+        const rows = document.querySelectorAll('#stokTableBody tr');
+        let hasVisible = false;
+        rows.forEach(r => {
+            if (r.id === 'emptySearchRow') return;
+            const text = r.textContent.toLowerCase();
+            if (text.includes(val)) {
+                r.style.display = '';
+                hasVisible = true;
+            } else {
+                r.style.display = 'none';
+            }
+        });
+        const emptyRow = document.getElementById('emptySearchRow');
+        if (emptyRow) {
+            emptyRow.style.display = hasVisible ? 'none' : '';
+        }
+    });
+</script>
+
+<%- include('../partials/footer') %>

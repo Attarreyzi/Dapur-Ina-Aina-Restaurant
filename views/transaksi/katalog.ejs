@@ -1,0 +1,176 @@
+<%- include('../partials/header') %>
+
+    <div style="display: grid; grid-template-columns: 1fr; gap: 20px;" class="pos-layout-grid">
+        <!-- Left Column: Menu Catalog Grid -->
+        <div style="min-width: 0; max-width: 100%; box-sizing: border-box;">
+            <!-- Search Bar (Full Width Top) -->
+            <div style="margin-bottom: 12px; width: 100%; position: relative;">
+                <input type="text" id="liveSearchMenu" class="form-control"
+                    placeholder="Cari nama menu makanan / minuman..." style="height: 44px; font-size: 0.92rem; width: 100%; padding-left: 42px; border-radius: var(--radius-md);">
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted); pointer-events: none;">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+            </div>
+
+            <!-- Category Tabs (Directly Underneath Search Bar on Both Desktop & Mobile) -->
+            <div class="category-tabs" style="margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 8px; width: 100%;">
+                <a href="/transaksi" class="category-tab-btn <%= !kategoriFilter ? 'active' : '' %>">Semua Menu</a>
+                <% categories.forEach(cat=> { %>
+                    <a href="/transaksi?kategori=<%= encodeURIComponent(cat.nama) %>"
+                        class="category-tab-btn <%= (kategoriFilter === cat.nama) ? 'active' : '' %>">
+                        <%= cat.nama %>
+                    </a>
+                <% }); %>
+            </div>
+
+            <!-- Menu Cards Grid -->
+            <div class="menu-grid">
+                <% if (produkList && produkList.length> 0) { %>
+                    <% produkList.forEach(prod=> { %>
+                        <div class="menu-card" data-name="<%= prod.nama_produk %>" data-category="<%= prod.kategori %>">
+                            <div class="menu-card-thumb">
+                                <img src="<%= prod.gambar || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80' %>"
+                                    alt="<%= prod.nama_produk %>" class="menu-card-img" loading="lazy"
+                                    onerror="this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80'">
+                                <div class="menu-card-badge-top">
+                                    <span
+                                        class="stock-badge <%= prod.stok === 0 ? 'stock-habis' : (prod.stok <= 5 ? 'stock-warning' : 'stock-tersedia') %>">
+                                        <%= prod.stok===0 ? 'Habis' : 'Stok: ' + prod.stok %>
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="menu-card-body">
+                                <span class="menu-card-category">
+                                    <%= prod.kategori %>
+                                </span>
+                                <div class="menu-card-title">
+                                    <%= prod.nama_produk %>
+                                </div>
+                                <% if (prod.deskripsi) { %>
+                                    <div class="menu-card-desc">
+                                        <%= prod.deskripsi %>
+                                    </div>
+                                    <% } %>
+
+                                        <div class="menu-card-footer">
+                                            <div class="menu-card-price">
+                                                <%= formatRupiah(prod.harga) %>
+                                            </div>
+                                            <% if (prod.stok> 0) { %>
+                                                <button type="button" class="btn btn-primary btn-sm"
+                                                    onclick="POS_CART.addItem(<%= prod.id_produk %>, '<%= prod.nama_produk.replace(/'/g, '\\\'') %>', <%= prod.harga %>, <%= prod.stok %>, '<%= prod.gambar %>', '<%= prod.kategori %>')">
+                                                    + Tambah
+                                                </button>
+                                                <% } else { %>
+                                                    <button type="button" class="btn btn-secondary btn-sm" disabled
+                                                        style="opacity: 0.5;">
+                                                        Stok Habis
+                                                    </button>
+                                                    <% } %>
+                                        </div>
+                            </div>
+                        </div>
+                        <% }); %>
+                            <% } else { %>
+                                <div
+                                    style="grid-column: 1 / -1; text-align: center; padding: 40px; background: #ffffff; border-radius: var(--radius-lg); border: 1px solid var(--border-light);">
+                                    Tidak ada menu yang sesuai dengan filter pencarian.
+                                </div>
+                                <% } %>
+            </div>
+        </div>
+
+        <!-- Right Column: Panel Keranjang Kasir -->
+        <div class="pos-cart-panel" style="min-width: 0; max-width: 100%; box-sizing: border-box;">
+            <div class="card" style="min-width: 0; max-width: 100%; box-sizing: border-box; overflow: hidden;">
+                <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                    <h3 style="font-size: 1.05rem; color: var(--text-main);">Keranjang</h3>
+                    <button type="button" onclick="POS_CART.clear()"
+                        style="background:none; border:none; color: var(--accent-red); font-size: 0.8rem; font-weight: 700; cursor: pointer;">
+                        Kosongkan
+                    </button>
+                </div>
+
+                <!-- List Cart Items -->
+                <div id="cartItemsContainer"
+                    style="max-height: 320px; overflow-y: auto; margin-bottom: 14px; padding-right: 2px; width: 100%; max-width: 100%; box-sizing: border-box; overflow-x: hidden;">
+                    <!-- Rendered by app.js -->
+                </div>
+
+                <!-- Total Box -->
+                <div
+                    style="padding: 12px 14px; background: var(--bg-input); border-radius: var(--radius-md); margin-bottom: 14px; width: 100%; box-sizing: border-box;">
+                    <div
+                        style="display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 0.84rem; color: var(--text-muted);">
+                        <span>Total Item:</span>
+                        <span class="cart-badge-count" style="font-weight: 700; color: var(--text-main);">0</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 1.15rem; font-weight: 800; gap: 8px;">
+                        <span style="white-space: nowrap;">Total Tagihan:</span>
+                        <span id="cartTotalDisplay" style="color: var(--primary); white-space: nowrap !important; flex-shrink: 0;">Rp 0</span>
+                    </div>
+                </div>
+
+                <!-- Checkout Form -->
+                <form action="/checkout" method="POST" id="posOrderForm" style="width: 100%; box-sizing: border-box;">
+                    <input type="hidden" name="cart_data" id="cartDataInput">
+
+                    <div class="form-group" style="width: 100%; box-sizing: border-box;">
+                        <label class="form-label">Nomor Meja</label>
+                        <select name="nomor_meja" class="form-control" required style="width: 100%; box-sizing: border-box;">
+                            <option value="Meja 01">Meja 01</option>
+                            <option value="Meja 02">Meja 02</option>
+                            <option value="Meja 03">Meja 03</option>
+                            <option value="Meja 04">Meja 04</option>
+                            <option value="Meja 05">Meja 05</option>
+                            <option value="Meja 06">Meja 06</option>
+                            <option value="Take Away (Bungkus)">Take Away (Bungkus)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group" style="width: 100%; box-sizing: border-box;">
+                        <label class="form-label">Nama Pelanggan</label>
+                        <input type="text" name="nama_pelanggan" class="form-control" placeholder="Pelanggan Umum" style="width: 100%; box-sizing: border-box;">
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-block btn-lg" id="btnSubmitOrder" disabled
+                        style="margin-top: 8px; width: 100%; box-sizing: border-box;">
+                        Proses Pesanan & Billing
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .pos-layout-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
+            overflow-x: hidden;
+        }
+        .pos-cart-panel {
+            position: static;
+            height: fit-content;
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
+        }
+        @media (min-width: 960px) {
+            .pos-layout-grid {
+                grid-template-columns: 1fr 340px !important;
+                overflow-x: visible;
+            }
+            .pos-cart-panel {
+                position: sticky !important;
+                top: 82px !important;
+            }
+        }
+    </style>
+
+    <%- include('../partials/footer') %>

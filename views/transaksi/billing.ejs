@@ -1,0 +1,255 @@
+<%- include('../partials/header') %>
+
+    <div style="max-width: 820px; margin: 0 auto;">
+        <!-- Tombol Kembali (Berdiri Sendiri di Baris Atas) -->
+        <div style="margin-bottom: 16px;">
+            <a href="/riwayat" class="btn btn-secondary btn-sm"
+                style="display: inline-flex; align-items: center; gap: 6px;">
+                <span>← Kembali ke Riwayat</span>
+            </a>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px;">
+            <!-- Left: Order Details -->
+            <div class="card">
+                <div class="card-header"
+                    style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+                    <div>
+                        <h3 style="font-size: 1.1rem; color: var(--text-main); margin-bottom: 2px;">Rincian Pesanan</h3>
+                        <span style="font-size: 0.85rem; font-weight: 700; color: var(--text-muted);">
+                            Pesanan #<%= order.no_pesanan %>
+                        </span>
+                    </div>
+                    <span class="stock-tag tag-available"
+                        style="position: static; font-size: 0.82rem; padding: 4px 10px;">
+                        <%= order.nomor_meja %>
+                    </span>
+                </div>
+
+                <div style="margin-bottom: 16px;">
+                    <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 2px;">Nama Pelanggan:</div>
+                    <div style="font-weight: 700; color: var(--text-main);">
+                        <%= order.nama_pelanggan || 'Pelanggan Umum' %>
+                    </div>
+                </div>
+
+                <div
+                    style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; max-height: 240px; overflow-y: auto;">
+                    <% order.items.forEach(item=> {
+                        const parts = (item.nama_produk || '').match(/^(.*?)\s*(\(.*?\))\s*$/);
+                        const mainName = parts ? parts[1] : item.nama_produk;
+                        const portionNote = parts ? parts[2] : '';
+                        %>
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: flex-start; font-size: 0.88rem; padding: 10px 0; border-bottom: 1px solid var(--border-light); gap: 12px;">
+                            <div style="flex: 1; min-width: 0;">
+                                <div
+                                    style="font-weight: 700; color: var(--text-main); line-height: 1.35; margin-bottom: 1px; word-break: break-word;">
+                                    <%= mainName %>
+                                </div>
+                                <% if (portionNote) { %>
+                                    <div style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 2px;">
+                                        <%= portionNote %>
+                                    </div>
+                                    <% } %>
+                                        <div style="font-size: 0.8rem; margin-top: 3px;">
+                                            <span
+                                                style="font-weight: 700; color: var(--text-main); background: var(--bg-input); padding: 2px 8px; border-radius: 4px; font-size: 0.76rem; border: 1px solid var(--border-light);">
+                                                <%= item.jumlah %> porsi
+                                            </span>
+                                        </div>
+                            </div>
+                            <div
+                                style="font-weight: 800; color: var(--text-main); white-space: nowrap !important; flex-shrink: 0; text-align: right; font-size: 0.95rem;">
+                                <%= formatRupiah(item.subtotal) %>
+                            </div>
+                        </div>
+                        <% }); %>
+                </div>
+
+                <div style="padding: 14px 16px; background: var(--bg-input); border-radius: var(--radius-md);">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; font-size: 1.15rem; font-weight: 800; gap: 8px;">
+                        <span style="white-space: nowrap;">Total Tagihan:</span>
+                        <span style="color: var(--primary); white-space: nowrap !important; flex-shrink: 0;">
+                            <%= formatRupiah(order.total_harga) %>
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Payment Processing -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 style="font-size: 1.1rem; color: var(--text-main);">Metode & Nominal Bayar</h3>
+                </div>
+
+                <form action="/proses_bayar" method="POST" id="billingPaymentForm">
+                    <input type="hidden" name="id_pesanan" value="<%= order.id_pesanan %>">
+
+                    <!-- Payment Method Toggle -->
+                    <div class="form-group">
+                        <label class="form-label">Metode Pembayaran</label>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <label style="cursor: pointer;">
+                                <input type="radio" name="metode_pembayaran" value="tunai" checked
+                                    style="display: none;" id="methodTunai">
+                                <div class="category-tab-btn"
+                                    style="width: 100%; text-align: center; padding: 12px; border-radius: var(--radius-md);"
+                                    id="labelTunai">
+                                    Tunai (Cash)
+                                </div>
+                            </label>
+                            <label style="cursor: pointer;">
+                                <input type="radio" name="metode_pembayaran" value="non_tunai" style="display: none;"
+                                    id="methodNonTunai">
+                                <div class="category-tab-btn"
+                                    style="width: 100%; text-align: center; padding: 12px; border-radius: var(--radius-md);"
+                                    id="labelNonTunai">
+                                    QRIS & E-Wallet
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Tunai Section -->
+                    <div id="tunaiSection">
+                        <div class="form-group">
+                            <label class="form-label">Uang Tunai Diterima (Rp)</label>
+                            <input type="number" name="uang_diterima" id="uangDiterimaInput" class="form-control"
+                                placeholder="50000" value="<%= order.total_harga %>" step="1000" required>
+                        </div>
+
+                        <!-- Quick Amount Buttons -->
+                        <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px;">
+                            <button type="button" class="btn btn-secondary btn-sm"
+                                onclick="setQuickCash(<%= order.total_harga %>)">Uang Pas</button>
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="setQuickCash(50000)">Rp
+                                50.000</button>
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="setQuickCash(100000)">Rp
+                                100.000</button>
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="setQuickCash(200000)">Rp
+                                200.000</button>
+                        </div>
+
+                        <div
+                            style="padding: 14px 16px; background: var(--bg-input); border-radius: var(--radius-md); margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center;">
+                            <span
+                                style="color: var(--text-muted); font-size: 0.9rem; font-weight: 600;">Kembalian:</span>
+                            <span id="uangKembalianDisplay"
+                                style="font-size: 1.25rem; font-weight: 800; color: var(--secondary-hover);">Rp 0</span>
+                        </div>
+                    </div>
+
+                    <!-- Non-Tunai / Midtrans Section -->
+                    <div id="nonTunaiSection" style="display: none;">
+                        <div
+                            style="text-align: center; padding: 20px; background: var(--bg-input); border-radius: var(--radius-md); margin-bottom: 18px; border: 1px solid var(--border-light);">
+                            <div style="font-weight: 800; font-size: 1.05rem; color: var(--text-main);">Midtrans Payment
+                                Gateway</div>
+                            <div
+                                style="display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; margin-top: 10px;">
+                                <span class="ewallet-pill-neutral">QRIS</span>
+                                <span class="ewallet-pill-neutral">GoPay</span>
+                                <span class="ewallet-pill-neutral">ShopeePay</span>
+                                <span class="ewallet-pill-neutral">Virtual Account</span>
+                            </div>
+                            <div
+                                style="margin: 14px 0 10px; font-weight: 800; font-size: 1.35rem; color: var(--primary);">
+                                <%= formatRupiah(order.total_harga) %>
+                            </div>
+                            <button type="button" class="btn btn-primary btn-sm" id="btnCashierMidtrans"
+                                onclick="payWithMidtransCashier()"
+                                style="margin-top: 4px; padding: 8px 16px; font-weight: 700;">
+                                💳 Tampilkan Midtrans Snap / QRIS
+                            </button>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">No. Referensi Transaksi (Opsional / Otomatis dari
+                                Midtrans)</label>
+                            <input type="text" name="no_referensi" id="cashierRefInput" class="form-control"
+                                placeholder="Contoh: MID-8374982">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-success btn-block btn-lg" id="btnSubmitBayar"
+                        style="margin-top: 10px;">
+                        Konfirmasi & Cetak Struk
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Midtrans Snap Script -->
+    <script src="<%= midtransSnapUrl %>" data-client-key="<%= midtransClientKey %>"></script>
+    <script src="/js/billing.js"></script>
+    <script>
+        const orderId = <%= order.id_pesanan %>;
+
+        async function payWithMidtransCashier() {
+            try {
+                const res = await fetch(`/api/midtrans/token/${orderId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const data = await res.json();
+                if (data.success && data.token) {
+                    if (data.token.startsWith('snap_token_mock_') || typeof window.snap === 'undefined') {
+                        // Mock simulator
+                        const ref = 'MID-SIM-' + Date.now().toString().slice(-6);
+                        document.getElementById('cashierRefInput').value = ref;
+                        showToast('success', 'Simulasi Midtrans berhasil! No. Referensi: ' + ref + '. silahkan klik "Konfirmasi & Cetak Struk".');
+                        return;
+                    }
+
+                    window.snap.pay(data.token, {
+                        onSuccess: function (result) {
+                            const ref = result.transaction_id || result.order_id || 'MID-' + Date.now();
+                            document.getElementById('cashierRefInput').value = ref;
+                            document.getElementById('billingPaymentForm').submit();
+                        },
+                        onPending: function (result) {
+                            const ref = result.transaction_id || result.order_id || 'MID-' + Date.now();
+                            document.getElementById('cashierRefInput').value = ref;
+                            document.getElementById('billingPaymentForm').submit();
+                        },
+                        onError: function () {
+                            showToast('error', 'Pembayaran Midtrans gagal diproses.');
+                        }
+                    });
+                } else {
+                    showToast('error', 'Gagal mendapatkan token Midtrans: ' + (data.message || 'Error'));
+                }
+            } catch (err) {
+                console.error(err);
+                showToast('error', 'Terjadi kesalahan koneksi Midtrans: ' + err.message);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initBillingPage(<%= order.total_harga %>);
+
+            const rTunai = document.getElementById('methodTunai');
+            const rNonTunai = document.getElementById('methodNonTunai');
+            const lTunai = document.getElementById('labelTunai');
+            const lNonTunai = document.getElementById('labelNonTunai');
+
+            function updateLabels() {
+                if (rTunai.checked) {
+                    lTunai.classList.add('active');
+                    lNonTunai.classList.remove('active');
+                } else {
+                    lTunai.classList.remove('active');
+                    lNonTunai.classList.add('active');
+                }
+            }
+
+            rTunai.addEventListener('change', updateLabels);
+            rNonTunai.addEventListener('change', updateLabels);
+            updateLabels();
+        });
+    </script>
+
+    <%- include('../partials/footer') %>

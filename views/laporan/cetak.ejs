@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laporan Penjualan Dapur Ina (<%= laporan.tanggal_mulai %> - <%= laporan.tanggal_akhir %>)</title>
+    <link rel="stylesheet" href="/css/print.css">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: Arial, sans-serif;
+            background: #f8fafc;
+            color: #0f172a;
+            padding: 24px;
+        }
+        .report-wrapper {
+            background: white;
+            max-width: 1050px;
+            margin: 0 auto;
+            padding: 32px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            border-radius: 8px;
+        }
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #0f172a;
+            padding-bottom: 16px;
+            margin-bottom: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 18px;
+            margin-bottom: 24px;
+            table-layout: auto;
+        }
+        th, td {
+            border: 1px solid #cbd5e1;
+            padding: 8px 10px;
+            font-size: 0.82rem;
+            text-align: left;
+            vertical-align: top;
+        }
+        th {
+            background: #f1f5f9;
+            font-weight: bold;
+            font-size: 0.82rem;
+        }
+        .menu-list-container {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .menu-list-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 6px;
+            line-height: 1.35;
+        }
+        .summary-box {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .summary-card {
+            border: 1px solid #cbd5e1;
+            padding: 14px;
+            border-radius: 6px;
+            background: #f8fafc;
+        }
+        .signatures {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 40px;
+            padding-top: 16px;
+            page-break-inside: avoid;
+        }
+        .sig-box {
+            text-align: center;
+            width: 240px;
+        }
+        .no-print-bar {
+            max-width: 1050px;
+            margin: 0 auto 16px;
+            display: flex;
+            gap: 10px;
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        @page {
+            size: A4 landscape;
+            margin: 0;
+        }
+        @media print {
+            body { background: white; padding: 0; }
+            .report-wrapper { box-shadow: none; padding: 10mm 12mm; max-width: 100% !important; border-radius: 0; }
+            table { page-break-inside: auto; width: 100%; }
+            tr { page-break-inside: avoid; page-break-after: auto; }
+            thead { display: table-header-group; }
+            tfoot { display: table-footer-group; }
+        }
+    </style>
+</head>
+<body>
+
+
+<div class="report-wrapper">
+    <div class="header">
+        <h1 style="font-size: 1.6rem; letter-spacing: -0.02em;">RESTORAN DAPUR INA AINA</h1>
+        <p style="font-size: 0.9rem; color: #475569; margin-top: 4px;">LAPORAN REKAPITULASI PENJUALAN & TRANSAKSI KASIR</p>
+        <p style="font-size: 0.82rem; color: #64748b; margin-top: 2px;">
+            Periode: <strong><%= laporan.tanggal_mulai %></strong> s.d. <strong><%= laporan.tanggal_akhir %></strong>
+        </p>
+    </div>
+
+    <div class="summary-box">
+        <div class="summary-card">
+            <div style="font-size: 0.8rem; color: #64748b;">Total Penjualan</div>
+            <div style="font-size: 1.25rem; font-weight: bold; color: #0f172a; margin-top: 4px;">
+                <%= formatRupiah(laporan.total_penjualan) %>
+            </div>
+        </div>
+        <div class="summary-card">
+            <div style="font-size: 0.8rem; color: #64748b;">Total Transaksi</div>
+            <div style="font-size: 1.25rem; font-weight: bold; color: #0f172a; margin-top: 4px;">
+                <%= laporan.total_transaksi %> Transaksi
+            </div>
+        </div>
+        <div class="summary-card">
+            <div style="font-size: 0.8rem; color: #64748b;">Tunai / Non Tunai</div>
+            <div style="font-size: 0.92rem; font-weight: bold; color: #0f172a; margin-top: 4px;">
+                <%= formatRupiah(laporan.total_tunai) %> / <%= formatRupiah(laporan.total_non_tunai) %>
+            </div>
+        </div>
+    </div>
+
+    <h3 style="font-size: 1.05rem; margin-bottom: 8px;">Rekap Transaksi Penjualan</h3>
+    <div class="table-scroll-wrapper">
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 35px; text-align: center;">No</th>
+                <th style="width: 120px;">Waktu Bayar</th>
+                <th style="width: 105px;">No. Pesanan</th>
+                <th style="width: 100px; text-align: center;">Meja / Jenis</th>
+                <th>Rincian Menu Dipesan</th>
+                <th style="width: 90px; text-align: center;">Metode</th>
+                <th style="width: 120px; text-align: right;">Total Tagihan</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% if (laporan.detail && laporan.detail.length > 0) { %>
+                <% laporan.detail.forEach((d, i) => { %>
+                    <tr>
+                        <td style="text-align: center;"><%= i + 1 %></td>
+                        <td style="white-space: nowrap;"><%= formatDate(d.tanggal_bayar) %></td>
+                        <td><strong><%= d.no_pesanan %></strong></td>
+                        <% 
+                            const isTakeAway = d.nomor_meja && (d.nomor_meja.toLowerCase().includes('take away') || d.nomor_meja.toLowerCase().includes('bungkus'));
+                            const mejaLabel = isTakeAway ? 'Take Away' : (d.nomor_meja || '-');
+                        %>
+                        <td style="text-align: center; font-weight: 700; font-size: 0.8rem;">
+                            <% if (isTakeAway) { %>
+                                <span style="background: #fef3c7; color: #92400e; border: 1px solid #fde68a; padding: 2px 7px; border-radius: 4px; font-size: 0.75rem; font-weight: 700;">Take Away</span>
+                            <% } else { %>
+                                <%= mejaLabel %>
+                            <% } %>
+                        </td>
+                        <td>
+                            <% if (d.rincian_menu) { %>
+                                <div class="menu-list-container">
+                                    <% d.rincian_menu.split(', ').forEach(menuItem => { %>
+                                        <div class="menu-list-row">
+                                            <span style="color: #64748b; font-weight: 700; margin-right: 2px;">-</span>
+                                            <span><%= menuItem %></span>
+                                        </div>
+                                    <% }); %>
+                                </div>
+                            <% } else { %>
+                                <span style="color: #94a3b8;">-</span>
+                            <% } %>
+                        </td>
+                        <td style="text-align: center;">
+                            <span style="font-weight: 600;"><%= d.metode === 'tunai' ? 'Tunai' : 'Non Tunai' %></span>
+                        </td>
+                        <td style="text-align: right; white-space: nowrap;"><strong><%= formatRupiah(d.jumlah_bayar) %></strong></td>
+                    </tr>
+                <% }); %>
+            <% } else { %>
+                <tr><td colspan="7" style="text-align: center; padding: 24px;">Tidak ada riwayat transaksi pada periode ini.</td></tr>
+            <% } %>
+        </tbody>
+    </table>
+    </div>
+
+    <div class="signatures">
+        <div class="sig-box">
+            <p style="font-size: 0.85rem; color: #475569; margin-bottom: 4px;">Mengetahui,</p>
+            <p style="font-size: 0.88rem; font-weight: bold; margin-bottom: 65px;">Manager Restoran</p>
+            <p style="font-size: 0.85rem; border-top: 1px solid #0f172a; padding-top: 4px;">( .................................... )</p>
+        </div>
+        <div class="sig-box">
+            <p style="font-size: 0.82rem; color: #475569; margin-bottom: 2px; white-space: nowrap;">Dicetak pada: <%= formatDate(new Date()) %></p>
+            <p style="font-size: 0.88rem; font-weight: bold; margin-top: 14px; margin-bottom: 65px;">Petugas Kasir / Admin</p>
+            <p style="font-size: 0.85rem; border-top: 1px solid #0f172a; padding-top: 4px;">( <%= admin ? admin.nama : 'Administrator' %> )</p>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

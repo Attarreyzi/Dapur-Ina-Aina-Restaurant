@@ -1,0 +1,48 @@
+/* Print Stylesheet for Receipts and Reports */
+@media print {
+  body {
+    background: white !important;
+    color: black !important;
+    font-size: 12pt;
+  }
+
+  .sidebar,
+  .top-navbar,
+  .mobile-bottom-nav,
+  .mobile-cart-bar,
+  .no-print,
+  .btn,
+  .navbar-actions {
+    display: none !important;
+  }
+
+  .main-wrapper {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .content-area {
+    padding: 0 !important;
+    max-width: 100% !important;
+  }
+
+  .card {
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    padding: 0 !important;
+  }
+
+  .receipt-container {
+    width: 80mm !important;
+    margin: 0 auto !important;
+    padding: 10px !important;
+    font-family: 'Courier New', Courier, monospace !important;
+    color: black !important;
+  }
+
+  .receipt-divider {
+    border-top: 1px dashed #000 !important;
+    margin: 8px 0 !important;
+  }
+}

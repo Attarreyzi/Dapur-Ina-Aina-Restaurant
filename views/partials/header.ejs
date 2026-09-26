@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title><%= typeof title !== 'undefined' ? title : 'Dapur Ina Aina' %></title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/print.css" media="print">
+    
+    <meta name="theme-color" content="#c2410c">
+</head>
+<body class="<%= locals.admin ? 'admin-layout' : 'customer-layout' %>">
+    <% if (currentPath !== '/login') { %>
+        <!-- Mobile Slide Drawer -->
+        <%- include('mobile_drawer') %>
+    <% } %>
+
+    <div class="app-container">
+        <% if (locals.admin) { %>
+            <%- include('sidebar') %>
+        <% } %>
+
+        <div class="main-wrapper">
+            <% if (currentPath !== '/login') { %>
+                <!-- Top Navbar -->
+                <header class="top-navbar no-print">
+                <div class="navbar-content-row">
+                    <!-- Left: Hamburger & Page Title -->
+                    <div style="display: flex; align-items: center; gap: 12px; min-width: 0;">
+                        <!-- Hamburger Button (Mobile & Tablet) -->
+                        <button type="button" class="hamburger-btn" id="mobileMenuToggleBtn" onclick="toggleMobileDrawer(event)" aria-label="Buka Menu Navigasi">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </button>
+
+                        <div class="header-page-title-wrap">
+                            <h1 class="header-page-title">
+                                <% if (locals.admin) { %>
+                                    <% if (currentPath === '/dashboard') { %>
+                                        Dashboard
+                                    <% } else if (currentPath.startsWith('/stok')) { %>
+                                        Kelola Stok
+                                    <% } else if (currentPath.startsWith('/riwayat')) { %>
+                                        Riwayat Pesanan
+                                    <% } else if (currentPath.startsWith('/laporan') || currentPath.startsWith('/cetak_laporan')) { %>
+                                        Laporan Penjualan
+                                    <% } else if (currentPath.startsWith('/transaksi')) { %>
+                                        Kasir POS
+                                    <% } else if (currentPath.startsWith('/billing')) { %>
+                                        Billing & Pembayaran
+                                    <% } else { %>
+                                        <%= typeof title !== 'undefined' ? title : 'Dashboard' %>
+                                    <% } %>
+                                <% } else { %>
+                                    <% if (currentPath === '/menu' || currentPath === '/') { %>
+                                        Buku Menu
+                                    <% } else if (currentPath === '/keranjang') { %>
+                                        Keranjang
+                                    <% } else if (currentPath.startsWith('/pesanan')) { %>
+                                        Status Pesanan
+                                    <% } else if (currentPath === '/login') { %>
+                                        Login Admin
+                                    <% } else { %>
+                                        <%= typeof title !== 'undefined' ? title : 'Dapur Ina Aina' %>
+                                    <% } %>
+                                <% } %>
+                            </h1>
+                        </div>
+                    </div>
+
+                    <!-- Right Navigation / Actions -->
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <% if (!locals.admin) { %>
+                            <!-- Desktop Customer Links (Hidden on Mobile) -->
+                            <div class="desktop-nav">
+                                <a href="/menu" class="nav-tab-link <%= currentPath === '/menu' || currentPath === '/' ? 'active' : '' %>" style="font-size: 0.86rem; font-weight: 700;">
+                                    Menu
+                                </a>
+                                <a href="/keranjang" class="nav-tab-link <%= currentPath === '/keranjang' ? 'active' : '' %>" style="font-size: 0.86rem; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                                        <path d="M16 10a4 4 0 0 1-8 0"></path>
+                                    </svg>
+                                    <span>Keranjang</span>
+                                    <span class="cart-badge-count" style="background: var(--primary); color: #ffffff; font-size: 0.72rem; padding: 1px 7px; border-radius: var(--radius-full); font-weight: 800; min-width: 18px; text-align: center;">0</span>
+                                </a>
+                                <a href="/pesanan" class="nav-tab-link <%= currentPath.startsWith('/pesanan') ? 'active' : '' %>" style="font-size: 0.86rem; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                        <polyline points="14 2 14 8 20 8"></polyline>
+                                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                                        <polyline points="10 9 9 9 8 9"></polyline>
+                                    </svg>
+                                    <span>Pesanan Saya</span>
+                                </a>
+                            </div>
+
+                            <!-- Mobile Quick Cart Icon Button -->
+                            <a href="/keranjang" class="mobile-cart-header-btn mobile-only" aria-label="Lihat Keranjang">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                                    <path d="M16 10a4 4 0 0 1-8 0"></path>
+                                </svg>
+                                <span class="cart-badge-count" style="background: var(--primary); color: #ffffff; font-size: 0.68rem; padding: 1px 5px; border-radius: var(--radius-full); font-weight: 800; min-width: 16px; text-align: center; position: absolute; top: -4px; right: -4px;">0</span>
+                            </a>
+                        <% } %>
+                    </div>
+                </div>
+            </header>
+            <% } %>
+
+            <main class="content-area">
+                <%- include('flash') %>

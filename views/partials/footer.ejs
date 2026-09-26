@@ -1,0 +1,114 @@
+            </main>
+
+            <% if (currentPath !== '/login') { %>
+            <!-- Clean Restaurant Footer -->
+            <footer class="no-print app-footer">
+                <div class="footer-brand">
+                    <% if (!locals.admin) { %>
+                        <span id="secretAdminTrigger" style="cursor: default; user-select: none; color: inherit; text-decoration: none;" title="">DAPUR INA AINA</span>
+                    <% } else { %>
+                        DAPUR INA AINA
+                    <% } %>
+                </div>
+
+                <% if (!locals.admin) { %>
+                    <!-- Lokasi Singkat (Tanpa Logo Lolipop) -->
+                    <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px; margin-bottom: 14px;">
+                        Perumahan Bumi Sentosa, Nanggewer Mekar, Cibinong
+                    </div>
+
+                    <!-- Tombol Media Sosial -->
+                    <div style="display: flex; justify-content: center; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 16px;">
+                        <!-- WhatsApp -->
+                        <a href="https://wa.me/6281234567890?text=Halo%20Dapur%20Ina%20Aina" target="_blank" rel="noopener noreferrer" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: var(--radius-full); background: #25D366; color: #ffffff; text-decoration: none; font-size: 0.78rem; font-weight: 700; box-shadow: 0 1px 3px rgba(37, 211, 102, 0.25); transition: transform 0.15s ease;">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/>
+                            </svg>
+                            <span>WhatsApp</span>
+                        </a>
+
+                        <!-- Instagram -->
+                        <a href="https://instagram.com/dapurina.aina" target="_blank" rel="noopener noreferrer" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: var(--radius-full); background: linear-gradient(45deg, #f09433, #dc2743, #bc1888); color: #ffffff; text-decoration: none; font-size: 0.78rem; font-weight: 700; box-shadow: 0 1px 3px rgba(220, 39, 67, 0.25); transition: transform 0.15s ease;">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                                <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                                <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                            </svg>
+                            <span>Instagram</span>
+                        </a>
+
+                        <!-- TikTok -->
+                        <a href="https://tiktok.com/@dapurinaaina" target="_blank" rel="noopener noreferrer" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: var(--radius-full); background: #000000; color: #ffffff; text-decoration: none; font-size: 0.78rem; font-weight: 700; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2); transition: transform 0.15s ease;">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64c.298-.002.595.042.88.13V9.4a6.33 6.33 0 0 0-1-.08A6.34 6.34 0 0 0 3 15.66a6.34 6.34 0 0 0 10.82 4.49 6.26 6.26 0 0 0 1.87-4.49V8.62a8.18 8.18 0 0 0 4.9 1.6V6.76c-.34-.01-.67-.03-1-.07z"/>
+                            </svg>
+                            <span>TikTok</span>
+                        </a>
+                    </div>
+                <% } %>
+
+                <div class="footer-copyright">
+                    &copy; <%= new Date().getFullYear() %> Dapur Ina Aina
+                </div>
+            </footer>
+            <% } %>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="/js/app.js"></script>
+    <script>
+        // Drawer Navigation Controller (Global Backup)
+        function openMobileDrawer() {
+            const drawer = document.getElementById('mobileDrawer');
+            const backdrop = document.getElementById('mobileDrawerBackdrop');
+            if (drawer) drawer.classList.add('open');
+            if (backdrop) backdrop.classList.add('open');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeMobileDrawer() {
+            const drawer = document.getElementById('mobileDrawer');
+            const backdrop = document.getElementById('mobileDrawerBackdrop');
+            if (drawer) drawer.classList.remove('open');
+            if (backdrop) backdrop.classList.remove('open');
+            document.body.style.overflow = '';
+        }
+
+        function toggleMobileDrawer(e) {
+            if (e && e.stopPropagation) e.stopPropagation();
+            const drawer = document.getElementById('mobileDrawer');
+            if (drawer && drawer.classList.contains('open')) {
+                closeMobileDrawer();
+            } else {
+                openMobileDrawer();
+            }
+        }
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') closeMobileDrawer();
+        });
+
+        // Secret Triple Click on Footer Brand for Admin Login
+        (function() {
+            let secretClicks = 0;
+            let secretTimer = null;
+            const trigger = document.getElementById('secretAdminTrigger');
+            if (trigger) {
+                trigger.addEventListener('click', function(e) {
+                    secretClicks++;
+                    if (secretTimer) clearTimeout(secretTimer);
+                    if (secretClicks >= 3) {
+                        secretClicks = 0;
+                        window.location.href = '/login';
+                    } else {
+                        secretTimer = setTimeout(function() {
+                            secretClicks = 0;
+                        }, 1200); // Harus klik 3 kali cepat dalam 1.2 detik
+                    }
+                });
+            }
+        })();
+    </script>
+</body>
+</html>

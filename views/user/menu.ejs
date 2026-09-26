@@ -1,0 +1,243 @@
+<%- include('../partials/header') %>
+
+<div>
+    <!-- Search Bar (Full Width Top) -->
+    <div style="margin-bottom: 12px; width: 100%; position: relative;">
+        <input type="text" id="liveSearchMenu" class="form-control" placeholder="Cari nama makanan atau minuman..." style="height: 44px; font-size: 0.95rem; width: 100%; padding-left: 42px; border-radius: var(--radius-md);">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted); pointer-events: none;">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+    </div>
+    
+    <!-- Category Tabs (Directly Underneath Search Bar on Desktop & Mobile) -->
+    <div class="category-tabs" style="margin-bottom: 22px; display: flex; flex-wrap: wrap; gap: 8px; width: 100%;">
+        <a href="/menu" class="category-tab-btn <%= !kategoriFilter ? 'active' : '' %>">Semua Menu</a>
+        <% categories.forEach(cat => { %>
+            <a href="/menu?kategori=<%= encodeURIComponent(cat.nama) %>" class="category-tab-btn <%= (kategoriFilter === cat.nama) ? 'active' : '' %>">
+                <%= cat.nama %>
+            </a>
+        <% }); %>
+    </div>
+
+    <!-- Menu Grid (Tampilan Luas, Rapi, & Proporsional Tanpa Terhimpit) -->
+    <div class="menu-grid">
+        <% if (produkList && produkList.length > 0) { %>
+            <% produkList.forEach(prod => { %>
+                <div class="menu-card" data-name="<%= prod.nama_produk %>" data-category="<%= prod.kategori %>">
+                    <!-- Foto Produk (Bisa Diklik untuk Melihat Detail) -->
+                    <div class="menu-card-thumb" 
+                         onclick="openProductDetail(<%= prod.id_produk %>, '<%= prod.nama_produk.replace(/'/g, '\\\'') %>', <%= prod.harga %>, <%= prod.stok %>, '<%= prod.gambar %>', '<%= prod.kategori %>', '<%= (prod.deskripsi || '').replace(/'/g, '\\\'') %>')" 
+                         title="Klik foto untuk melihat deskripsi lengkap">
+                        <img src="<%= prod.gambar || 'https://images.unsplash.com/photo-1603133872878-684f208fb84b?auto=format&fit=crop&w=600&q=80' %>" 
+                             alt="<%= prod.nama_produk %>" 
+                             class="menu-card-img" 
+                             loading="lazy"
+                             onerror="this.src='https://images.unsplash.com/photo-1603133872878-684f208fb84b?auto=format&fit=crop&w=600&q=80'">
+                        <div class="menu-card-badge-top">
+                            <span class="stock-badge <%= prod.stok === 0 ? 'stock-habis' : (prod.stok <= 5 ? 'stock-warning' : 'stock-tersedia') %>">
+                                <%= prod.stok === 0 ? 'Habis' : (prod.stok <= 5 ? 'Sisa ' + prod.stok : 'Tersedia') %>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="menu-card-body">
+                        <span class="menu-card-category"><%= prod.kategori %></span>
+                        <div class="menu-card-title" 
+                             onclick="openProductDetail(<%= prod.id_produk %>, '<%= prod.nama_produk.replace(/'/g, '\\\'') %>', <%= prod.harga %>, <%= prod.stok %>, '<%= prod.gambar %>', '<%= prod.kategori %>', '<%= (prod.deskripsi || '').replace(/'/g, '\\\'') %>')" 
+                             style="cursor: pointer;" 
+                             title="Klik untuk melihat deskripsi lengkap">
+                            <%= prod.nama_produk %>
+                        </div>
+                        <% if (prod.deskripsi) { %>
+                            <p class="menu-card-desc"><%= prod.deskripsi %></p>
+                        <% } %>
+
+                        <div class="menu-card-footer">
+                            <div class="menu-card-price"><%= formatRupiah(prod.harga) %></div>
+                            <% if (prod.stok > 0) { %>
+                                <button type="button" class="btn btn-primary btn-sm" onclick="POS_CART.addItem(<%= prod.id_produk %>, '<%= prod.nama_produk.replace(/'/g, '\\\'') %>', <%= prod.harga %>, <%= prod.stok %>, '<%= prod.gambar %>', '<%= prod.kategori %>')">
+                                    + Tambah
+                                </button>
+                            <% } else { %>
+                                <button type="button" class="btn btn-secondary btn-sm" disabled style="opacity: 0.5;">
+                                    Habis
+                                </button>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+            <% }); %>
+        <% } else { %>
+            <div style="grid-column: 1 / -1; text-align: center; padding: 40px; background: #ffffff; border-radius: var(--radius-lg); border: 1px solid var(--border-light);">
+                Tidak ada menu yang sesuai dengan pencarian.
+            </div>
+        <% } %>
+    </div>
+
+</div>
+
+<!-- Modal Pop-up Detail Produk (Muncul Saat Foto Produk Diklik) -->
+<div class="modal-overlay" id="productDetailModal" onclick="closeProductDetail(event)">
+    <div class="modal-box" style="max-width: 520px; padding: 0; overflow: hidden; border-radius: var(--radius-xl);" onclick="event.stopPropagation()">
+        <!-- Header Foto Makanan -->
+        <div style="position: relative; height: 260px; width: 100%; background: #f8fafc; overflow: hidden;">
+            <img id="detailModalImg" src="" alt="" style="width: 100%; height: 100%; object-fit: cover;">
+            
+            <!-- Category Badge -->
+            <div style="position: absolute; top: 14px; left: 14px;">
+                <span id="detailModalCategory" style="font-size: 0.74rem; font-weight: 800; text-transform: uppercase; background: rgba(255, 255, 255, 0.95); color: var(--primary); padding: 4px 12px; border-radius: var(--radius-full); box-shadow: 0 2px 8px rgba(0,0,0,0.15); letter-spacing: 0.04em;">
+                    Makanan
+                </span>
+            </div>
+
+            <!-- Tombol Tutup X -->
+            <button type="button" onclick="closeProductDetail()" aria-label="Tutup" style="position: absolute; top: 12px; right: 12px; width: 34px; height: 34px; border-radius: 50%; background: rgba(15, 23, 42, 0.65); border: none; color: #ffffff; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px); transition: all 0.15s ease;">
+                ✕
+            </button>
+        </div>
+
+        <!-- Body Detail Produk -->
+        <div style="padding: 22px 24px;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 8px;">
+                <h3 id="detailModalTitle" style="font-size: 1.35rem; font-weight: 800; color: var(--text-main); margin: 0; line-height: 1.25;">
+                    Nama Hidangan
+                </h3>
+                <span id="detailModalStock" class="stock-badge stock-tersedia" style="font-size: 0.78rem; flex-shrink: 0; padding: 4px 10px;">
+                    Tersedia
+                </span>
+            </div>
+
+            <div id="detailModalPrice" style="font-size: 1.35rem; font-weight: 800; color: var(--primary); margin-bottom: 16px;">
+                Rp 0
+            </div>
+
+            <div style="margin-bottom: 18px;">
+                <div style="font-size: 0.76rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px;">
+                    Deskripsi & Racikan Cita Rasa
+                </div>
+                <p id="detailModalDesc" style="font-size: 0.92rem; color: #475569; line-height: 1.6; margin: 0; background: #f8fafc; padding: 14px 16px; border-radius: var(--radius-md); border: 1px solid var(--border-light);">
+                    Deskripsi sajian...
+                </p>
+            </div>
+        </div>
+
+        <!-- Footer Modal: Pengatur Porsi & Tombol Tambah ke Keranjang -->
+        <div style="padding: 16px 24px; background: #f8fafc; border-top: 1px solid var(--border-light); display: flex; align-items: center; justify-content: space-between; gap: 14px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted);">Porsi:</span>
+                <div class="cart-stepper" style="background: #ffffff; border: 1px solid var(--border-light);">
+                    <button type="button" class="cart-stepper-btn" onclick="updateModalDetailQty(-1)" aria-label="Kurangi porsi">-</button>
+                    <span class="cart-stepper-num" id="modalDetailQty">1</span>
+                    <button type="button" class="cart-stepper-btn" id="modalDetailBtnPlus" onclick="updateModalDetailQty(1)" aria-label="Tambah porsi">+</button>
+                </div>
+            </div>
+
+            <button type="button" class="btn btn-primary" id="modalDetailBtnAdd" onclick="addModalDetailToCart()" style="flex: 1; height: 44px; font-weight: 800; font-size: 0.92rem; display: inline-flex; align-items: center; justify-content: center; gap: 6px;">
+                <span>+ Masukkan Keranjang</span>
+                <span id="modalDetailSubtotal"></span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentDetailProduct = null;
+    let currentDetailQty = 1;
+
+    function openProductDetail(id, name, price, stock, img, category, desc) {
+        currentDetailProduct = { id, name, price, stock, img, category, desc };
+        currentDetailQty = 1;
+
+        document.getElementById('detailModalImg').src = img || 'https://images.unsplash.com/photo-1603133872878-684f208fb84b?auto=format&fit=crop&w=600&q=80';
+        document.getElementById('detailModalTitle').textContent = name;
+        document.getElementById('detailModalCategory').textContent = category || 'Menu Spesial';
+        document.getElementById('detailModalPrice').textContent = 'Rp ' + Number(price).toLocaleString('id-ID');
+        document.getElementById('detailModalDesc').textContent = desc || 'Hidangan istimewa racikan bumbu khas Dapur Ina Aina, diolah dari bahan segar bermutu tinggi.';
+
+        const stockEl = document.getElementById('detailModalStock');
+        const btnAdd = document.getElementById('modalDetailBtnAdd');
+        const btnPlus = document.getElementById('modalDetailBtnPlus');
+
+        if (stock <= 0) {
+            stockEl.className = 'stock-badge stock-habis';
+            stockEl.textContent = 'Habis';
+            btnAdd.disabled = true;
+            btnAdd.innerHTML = '<span>Stok Habis</span>';
+            if (btnPlus) btnPlus.disabled = true;
+        } else if (stock <= 5) {
+            stockEl.className = 'stock-badge stock-warning';
+            stockEl.textContent = 'Sisa ' + stock;
+            btnAdd.disabled = false;
+        } else {
+            stockEl.className = 'stock-badge stock-tersedia';
+            stockEl.textContent = 'Tersedia';
+            btnAdd.disabled = false;
+        }
+
+        updateModalDetailDisplay();
+
+        const modal = document.getElementById('productDetailModal');
+        if (modal) modal.classList.add('active');
+    }
+
+    function updateModalDetailQty(delta) {
+        if (!currentDetailProduct) return;
+        const maxLimit = Math.min(20, currentDetailProduct.stock || 20);
+        const newQty = currentDetailQty + delta;
+        if (newQty >= 1 && newQty <= maxLimit) {
+            currentDetailQty = newQty;
+            updateModalDetailDisplay();
+        }
+    }
+
+    function updateModalDetailDisplay() {
+        const qtyEl = document.getElementById('modalDetailQty');
+        const subtotalEl = document.getElementById('modalDetailSubtotal');
+        const btnPlus = document.getElementById('modalDetailBtnPlus');
+
+        if (qtyEl) qtyEl.textContent = currentDetailQty;
+
+        if (currentDetailProduct && currentDetailProduct.stock > 0) {
+            const subtotal = currentDetailProduct.price * currentDetailQty;
+            if (subtotalEl) {
+                subtotalEl.textContent = '(Rp ' + subtotal.toLocaleString('id-ID') + ')';
+            }
+            const maxLimit = Math.min(20, currentDetailProduct.stock || 20);
+            if (btnPlus) {
+                btnPlus.disabled = (currentDetailQty >= maxLimit);
+                btnPlus.style.opacity = (currentDetailQty >= maxLimit) ? '0.35' : '1';
+            }
+        }
+    }
+
+    function addModalDetailToCart() {
+        if (!currentDetailProduct || currentDetailProduct.stock <= 0) return;
+        for (let i = 0; i < currentDetailQty; i++) {
+            POS_CART.addItem(
+                currentDetailProduct.id,
+                currentDetailProduct.name,
+                currentDetailProduct.price,
+                currentDetailProduct.stock,
+                currentDetailProduct.img,
+                currentDetailProduct.category
+            );
+        }
+        closeProductDetail();
+    }
+
+    function closeProductDetail(e) {
+        if (e && e.target && e.target !== document.getElementById('productDetailModal')) return;
+        const modal = document.getElementById('productDetailModal');
+        if (modal) modal.classList.remove('active');
+    }
+
+    // Keyboard ESC to close modal
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeProductDetail();
+        }
+    });
+</script>
+
+<%- include('../partials/footer') %>

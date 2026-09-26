@@ -1,0 +1,55 @@
+<%- include('partials/header') %>
+
+<div style="max-width: 860px; margin: 0 auto;">
+    <div style="margin-bottom: 20px;">
+        <h1 style="font-size: 1.4rem; margin-bottom: 4px;">Demonstrasi Penanganan Error (Exception Handling LSP)</h1>
+        <p style="color: var(--text-muted); font-size: 0.88rem;">
+            Fitur pengujian untuk asesor sertifikasi LSP guna memverifikasi mekanisme <code>try-catch</code>, validasi input, dan pencegahan error sistem.
+        </p>
+    </div>
+
+    <div class="card">
+        <div style="display: flex; flex-direction: column; gap: 14px;">
+            <!-- Skenario 1 -->
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px; background: var(--bg-input); border-radius: var(--radius-md); gap: 16px; flex-wrap: wrap;">
+                <div>
+                    <strong style="color: var(--text-main); font-size: 0.95rem;">1. Simulasi Stok Habis (Out of Stock Exception)</strong>
+                    <div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 2px;">
+                        Memicu exception saat jumlah porsi yang dipesan melebihi stok yang tersedia di database.
+                    </div>
+                </div>
+                <a href="/api/error_demo?scenario=out_of_stock" target="_blank" class="btn btn-danger btn-sm">
+                    Jalankan Pengujian
+                </a>
+            </div>
+
+            <!-- Skenario 2 -->
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px; background: var(--bg-input); border-radius: var(--radius-md); gap: 16px; flex-wrap: wrap;">
+                <div>
+                    <strong style="color: var(--text-main); font-size: 0.95rem;">2. Simulasi Pembayaran Kurang (Insufficient Cash Exception)</strong>
+                    <div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 2px;">
+                        Memicu validasi exception saat uang tunai yang diserahkan pelanggan kurang dari total tagihan.
+                    </div>
+                </div>
+                <a href="/api/error_demo?scenario=insufficient_cash" target="_blank" class="btn btn-danger btn-sm">
+                    Jalankan Pengujian
+                </a>
+            </div>
+
+            <!-- Skenario 3 -->
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px; background: var(--bg-input); border-radius: var(--radius-md); gap: 16px; flex-wrap: wrap;">
+                <div>
+                    <strong style="color: var(--text-main); font-size: 0.95rem;">3. Simulasi Gangguan Koneksi Basis Data</strong>
+                    <div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 2px;">
+                        Memicu exception handler koneksi database tanpa membuat aplikasi crash.
+                    </div>
+                </div>
+                <a href="/api/error_demo?scenario=database_error" target="_blank" class="btn btn-danger btn-sm">
+                    Jalankan Pengujian
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<%- include('partials/footer') %>

@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Struk <%= order.no_pesanan %> - Dapur Ina Aina</title>
+    <link rel="stylesheet" href="/css/print.css">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Courier New', Courier, monospace;
+            background: #f1f5f9;
+            color: #0f172a;
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+        }
+        .receipt-card {
+            background: #ffffff;
+            width: 100%;
+            max-width: 380px;
+            padding: 24px;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        .text-center { text-align: center; }
+        .text-right { text-align: right; }
+        .divider {
+            border-top: 1px dashed #cbd5e1;
+            margin: 12px 0;
+        }
+        .item-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 6px;
+            font-size: 0.9rem;
+        }
+        .no-print-bar {
+            margin-bottom: 16px;
+            display: flex;
+            gap: 10px;
+        }
+        .btn-action {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .btn-print { background: #0f172a; color: white; }
+        .btn-back { background: #e2e8f0; color: #0f172a; }
+        @media print {
+            body { background: white; padding: 0; }
+            .receipt-card { box-shadow: none; max-width: 100%; padding: 0; }
+            .no-print-bar { display: none !important; }
+        }
+    </style>
+</head>
+<body>
+
+<div>
+    <div class="no-print-bar">
+        <button type="button" class="btn-action btn-back" onclick="window.close() || history.back()">← Kembali</button>
+        <button type="button" class="btn-action btn-print" onclick="window.print()">Cetak Struk</button>
+    </div>
+
+    <div class="receipt-card">
+        <div class="text-center">
+            <h2 style="font-size: 1.3rem; margin-bottom: 2px;">DAPUR INA AINA</h2>
+            <p style="font-size: 0.8rem; color: #475569;">Restoran & Kuliner Tradisional</p>
+            <p style="font-size: 0.75rem; color: #64748b;">Jl. Raya Restoran No. 88 | 0812-3456-7890</p>
+        </div>
+
+        <div class="divider"></div>
+
+        <div style="font-size: 0.82rem; line-height: 1.5;">
+            <div style="display: flex; justify-content: space-between;">
+                <span>No. Pesanan:</span>
+                <strong><%= order.no_pesanan %></strong>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+                <span>Tanggal:</span>
+                <span><%= formatDate(order.tanggal_bayar || order.waktu_pesan) %></span>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+                <span>Meja / Lokasi:</span>
+                <strong><%= order.nomor_meja %></strong>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+                <span>Pelanggan:</span>
+                <span><%= order.nama_pelanggan || 'Pelanggan Umum' %></span>
+            </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div>
+            <% order.items.forEach(item => { %>
+                <div class="item-row">
+                    <div>
+                        <div><%= item.nama_produk %></div>
+                        <div style="font-size: 0.75rem; color: #64748b;"><%= item.jumlah %> x <%= formatRupiah(item.harga) %></div>
+                    </div>
+                    <div style="font-weight: bold;"><%= formatRupiah(item.subtotal) %></div>
+                </div>
+            <% }); %>
+        </div>
+
+        <div class="divider"></div>
+
+        <div style="font-size: 0.88rem; line-height: 1.6;">
+            <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 1.05rem;">
+                <span>TOTAL:</span>
+                <span><%= formatRupiah(order.total_harga) %></span>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+                <span>Metode:</span>
+                <span><%= (order.metode_pembayaran === 'tunai' || order.metode_pembayaran === 'Tunai') ? 'TUNAI' : 'NON-TUNAI / QRIS' %></span>
+            </div>
+            <% if (order.metode_pembayaran === 'tunai' || order.metode_pembayaran === 'Tunai') { %>
+                <div style="display: flex; justify-content: space-between;">
+                    <span>Diterima:</span>
+                    <span><%= formatRupiah(order.uang_diterima || order.total_harga) %></span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span>Kembalian:</span>
+                    <span><%= formatRupiah(order.uang_kembalian || 0) %></span>
+                </div>
+            <% } %>
+            <% if (order.no_referensi) { %>
+                <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: #64748b;">
+                    <span>Ref:</span>
+                    <span><%= order.no_referensi %></span>
+                </div>
+            <% } %>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="text-center" style="font-size: 0.78rem; color: #475569; margin-top: 14px;">
+            <p>*** TERIMA KASIH ***</p>
+            <p style="margin-top: 4px;">Selamat Menikmati Sajian Kami</p>
+            <p style="font-size: 0.7rem; color: #94a3b8; margin-top: 6px;">Dapur Ina POS Cloud v2.0</p>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,112 @@
+<%- include('../partials/header') %>
+
+<!-- Filter & Action Bar: Auto-Submit saat Periode Dipilih -->
+<div class="card laporan-bar-card" style="margin-bottom: 18px; padding: 14px 18px;">
+    <form action="/laporan" method="GET" id="laporanFilterForm" class="laporan-filter-form" style="display: flex; justify-content: space-between; align-items: center; gap: 14px; flex-wrap: wrap;">
+        <div class="laporan-filter-left" style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 280px;">
+            <label class="form-label" style="margin-bottom: 0; font-weight: 700; font-size: 0.88rem; white-space: nowrap;">Periode:</label>
+            <select name="jenis_periode" id="jenisPeriodeSelect" class="form-control laporan-select" style="height: 40px; min-width: 250px; font-weight: 600;" onchange="this.form.submit()">
+                <option value="mingguan" <%= jenisPeriode === 'mingguan' ? 'selected' : '' %>>Laporan Mingguan (7 Hari Terakhir)</option>
+                <option value="bulanan" <%= jenisPeriode === 'bulanan' ? 'selected' : '' %>>Laporan Bulanan (Bulan Ini)</option>
+            </select>
+        </div>
+
+        <div class="laporan-actions-wrap" style="display: flex; align-items: center; gap: 10px;">
+            <a id="cetakPdfBtn" href="/download_laporan?jenis_periode=<%= jenisPeriode %>" class="btn btn-primary" style="height: 40px; width: 160px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-weight: 700; font-size: 0.86rem; text-decoration: none; white-space: nowrap;"
+               onclick="showToast('info', 'Sedang menyiapkan PDF, tunggu sebentar...', 7000)">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                <span>Cetak PDF</span>
+            </a>
+        </div>
+    </form>
+</div>
+
+<script>
+    // Update href Unduh PDF saat dropdown berubah sebelum form submit
+    document.getElementById('jenisPeriodeSelect')?.addEventListener('change', function() {
+        const val = this.value;
+        const btn = document.getElementById('cetakPdfBtn');
+        if (btn) btn.href = '/download_laporan?jenis_periode=' + val;
+    });
+</script>
+
+<!-- Stats Summary Cards (Color-Coded Matching Dashboard) -->
+<div class="stats-grid">
+    <div class="stat-card stat-card-terracotta">
+        <div class="stat-label">Total Omset Penjualan</div>
+        <div class="stat-value" style="color: var(--primary);"><%= formatRupiah(laporan.total_penjualan) %></div>
+    </div>
+
+    <div class="stat-card stat-card-indigo">
+        <div class="stat-label">Total Transaksi</div>
+        <div class="stat-value" style="color: #4338ca;"><%= laporan.total_transaksi %> Transaksi</div>
+    </div>
+
+    <div class="stat-card stat-card-green">
+        <div class="stat-label">Omset Tunai (Cash)</div>
+        <div class="stat-value" style="color: #15803d;"><%= formatRupiah(laporan.total_tunai) %></div>
+    </div>
+
+    <div class="stat-card stat-card-indigo">
+        <div class="stat-label">Omset Non-Tunai / QRIS</div>
+        <div class="stat-value" style="color: #4338ca;"><%= formatRupiah(laporan.total_non_tunai) %></div>
+    </div>
+</div>
+
+<!-- Unified Single Laporan Table -->
+<div class="card card-table" style="margin-top: 24px; padding: 0; overflow: hidden; border-radius: var(--radius-lg);">
+    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; padding: 16px 20px; border-bottom: 1px solid var(--border-light); margin-bottom: 0; background: #fafafa;">
+        <h3 style="font-size: 1.05rem; color: var(--text-main); font-weight: 800; margin: 0;">Rekap Transaksi Penjualan</h3>
+        <div style="font-size: 0.82rem; color: #64748b; font-weight: 600; white-space: nowrap;">
+            Periode: <%= laporan.tanggal_mulai %> s.d. <%= laporan.tanggal_akhir %>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="custom-table">
+            <thead>
+                <tr>
+                    <th>No. Pesanan</th>
+                    <th>Waktu Bayar</th>
+                    <th>Pelanggan & Lokasi</th>
+                    <th>Rincian Menu Dipesan</th>
+                    <th>Metode</th>
+                    <th>Total Tagihan</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% if (laporan.detail && laporan.detail.length > 0) { %>
+                    <% laporan.detail.forEach(d => { %>
+                        <tr>
+                            <td><strong style="color: var(--text-main);"><%= d.no_pesanan %></strong></td>
+                            <td><%= formatDate(d.tanggal_bayar) %></td>
+                            <td>
+                                <div><strong><%= d.nama_pelanggan || 'Umum' %></strong></div>
+                                <div style="font-size: 0.78rem; color: var(--text-dim);"><%= d.nomor_meja %> (<%= d.alamat || 'Dine In' %>)</div>
+                            </td>
+                            <td style="max-width: 260px; font-size: 0.85rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="<%= d.rincian_menu %>">
+                                <%= d.rincian_menu || '-' %>
+                            </td>
+                            <td>
+                                <% if (d.metode === 'tunai') { %>
+                                    <span class="badge-tunai">Tunai</span>
+                                <% } else { %>
+                                    <span class="badge-nontunai">Non Tunai</span>
+                                <% } %>
+                            </td>
+                            <td><strong style="color: var(--text-main);"><%= formatRupiah(d.jumlah_bayar) %></strong></td>
+                        </tr>
+                    <% }); %>
+                <% } else { %>
+                    <tr>
+                        <td colspan="6" style="text-align: center; color: var(--text-dim); padding: 40px;">
+                            Tidak ada data transaksi pada periode laporan ini.
+                        </td>
+                    </tr>
+                <% } %>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<%- include('../partials/footer') %>
