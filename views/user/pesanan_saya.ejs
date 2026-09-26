@@ -45,9 +45,15 @@
                 </div>
             </div>
 
+            <% 
+            const rawCatatan = (order.catatan || '').trim();
+            const isDefaultStatus = ['menunggu', 'tunai', 'qris', 'transfer', 'lunas', '-', 'dine in', 'take away', ''].includes(rawCatatan.toLowerCase());
+            const cleanDisplayCatatan = (!isDefaultStatus) ? rawCatatan.replace(/\[Metode:[^\]]+\]/gi, '').trim() : '';
+            %>
+
             <!-- Identitas Pemesan & Lokasi Meja -->
             <div
-                style="background: var(--bg-input); border-radius: var(--radius-md); padding: 12px 14px; margin-bottom: 18px; border: 1px solid var(--border-light);">
+                style="background: var(--bg-input); border-radius: var(--radius-md); padding: 14px 16px; margin-bottom: 18px; border: 1px solid var(--border-light);">
                 <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 0.86rem;">
                     <span style="color: var(--text-muted);">Nomor Meja:</span>
                     <strong style="color: #0f172a !important; font-weight: 800;">
@@ -56,16 +62,24 @@
                 </div>
                 <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 0.86rem;">
                     <span style="color: var(--text-muted);">Nama Pemesan:</span>
-                    <strong style="color: var(--text-main);">
+                    <strong style="color: var(--text-main); font-weight: 700;">
                         <%= order.nama_pelanggan || 'Tamu Restoran' %>
                     </strong>
                 </div>
                 <div style="display: flex; justify-content: space-between; font-size: 0.86rem;">
                     <span style="color: var(--text-muted);">No. Telepon / WhatsApp:</span>
-                    <strong style="color: var(--text-main);">
+                    <strong style="color: var(--text-main); font-weight: 700;">
                         <%= order.no_telepon || '-' %>
                     </strong>
                 </div>
+                <% if (cleanDisplayCatatan) { %>
+                <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border-light); font-size: 0.86rem; display: flex; flex-direction: column; gap: 3px;">
+                    <span style="color: var(--text-muted);">Catatan Pesanan:</span>
+                    <span style="color: var(--text-main); font-weight: 600; word-break: break-word; overflow-wrap: anywhere; line-height: 1.45;">
+                        <%= cleanDisplayCatatan %>
+                    </span>
+                </div>
+                <% } %>
             </div>
 
             <!-- Daftar Menu -->
@@ -102,19 +116,6 @@
                         <% }); %>
                 </div>
             </div>
-
-            <% 
-            const rawCatatan = (order.catatan || '').trim();
-            const isDefaultStatus = ['menunggu', 'tunai', 'qris', 'transfer', 'lunas', '-', 'dine in', 'take away', ''].includes(rawCatatan.toLowerCase());
-            const cleanDisplayCatatan = (!isDefaultStatus) ? rawCatatan.replace(/\[Metode:[^\]]+\]/gi, '').trim() : '';
-            %>
-            <% if (cleanDisplayCatatan) { %>
-                <div
-                    style="padding: 12px 14px; background: #fff7ed; border: 1px solid #fed7aa; border-radius: var(--radius-md); margin-bottom: 18px; font-size: 0.86rem; color: #9a3412; display: flex; align-items: flex-start; gap: 8px;">
-                    <span style="font-weight: 800; flex-shrink: 0;">Catatan Khusus:</span>
-                    <span><%= cleanDisplayCatatan %></span>
-                </div>
-            <% } %>
 
                         <!-- Total Tagihan -->
                         <div class="cart-bill-summary" style="margin-bottom: 20px;">

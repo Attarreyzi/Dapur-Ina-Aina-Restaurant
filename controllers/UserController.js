@@ -124,7 +124,7 @@ class UserController {
                 console.error('Midtrans token generation error on checkout:', snapErr.message);
             }
 
-            req.session.flash_success = `Pesanan (${createdOrder.no_pesanan}) berhasil dikirim ke dapur! silahkan pilih metode pembayaran.`;
+            req.session.flash_success = `Pesanan (${createdOrder.no_pesanan}) berhasil dibuat! Silakan selesaikan pembayaran via QRIS atau di Kasir.`;
             return res.redirect(`/pesanan/${createdOrder.id_pesanan}`);
         } catch (err) {
             req.session.flash_error = 'Gagal mengirim pesanan: ' + err.message;
