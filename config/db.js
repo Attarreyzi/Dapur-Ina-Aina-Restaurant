@@ -416,6 +416,66 @@ function runMemoryQuery(sql, params = []) {
         return Promise.resolve({ rows, rowCount: rows.length });
     }
 
+    // 4b. SELECT TRANSAKSI (FOR DASHBOARD & LAPORAN)
+    if (lower.startsWith('select') && lower.includes('from transaksi')) {
+        if (lower.includes('sum(') || lower.includes('coalesce(sum')) {
+            const list = memoryDb.transaksi;
+            let totalPenjualan = 0;
+            let totalTunai = 0;
+            let totalNonTunai = 0;
+            for (const t of list) {
+                const j = parseFloat(t.jumlah_bayar) || 0;
+                totalPenjualan += j;
+                if ((t.metode || '').toLowerCase().includes('non')) {
+                    totalNonTunai += j;
+                } else {
+                    totalTunai += j;
+                }
+            }
+            return Promise.resolve({
+                rows: [{
+                    omset_hari_ini: totalPenjualan,
+                    transaksi_hari_ini: list.length,
+                    total_pendapatan: totalPenjualan,
+                    total_transaksi: list.length,
+                    total_penjualan: totalPenjualan,
+                    total_tunai: totalTunai,
+                    total_non_tunai: totalNonTunai
+                }],
+                rowCount: 1
+            });
+        }
+
+        let rows = memoryDb.transaksi.map(t => {
+            const p = memoryDb.pesanan.find(pes => String(pes.id_pesanan) === String(t.id_pesanan)) || {};
+            const cust = memoryDb.pelanggan.find(c => String(c.id_pelanggan) === String(p.id_pelanggan)) || {};
+            const items = memoryDb.detail_pesanan.filter(d => String(d.id_pesanan) === String(p.id_pesanan));
+            const rincianMenu = items.map(it => {
+                const pr = memoryDb.produk.find(prod => String(prod.id_produk) === String(it.id_produk)) || {};
+                return `${pr.nama_produk || 'Item'} x${it.jumlah}`;
+            }).join(', ');
+
+            return {
+                ...t,
+                id_transaksi: t.id_transaksi,
+                id_pesanan: t.id_pesanan,
+                no_pesanan: `ORD-${String(t.id_pesanan).padStart(5, '0')}`,
+                tanggal_bayar: t.tanggal_bayar || t.created_at,
+                metode: t.metode || 'tunai',
+                jumlah_bayar: parseFloat(t.jumlah_bayar) || 0,
+                uang_diterima: parseFloat(t.uang_diterima) || 0,
+                uang_kembalian: parseFloat(t.uang_kembalian) || 0,
+                no_referensi: t.no_referensi || '',
+                nama_pelanggan: cust.nama || p.nama_pelanggan || 'Pelanggan',
+                nomor_meja: p.nomor_meja || 'Meja 01',
+                rincian_menu: rincianMenu
+            };
+        });
+
+        rows.sort((a, b) => b.id_transaksi - a.id_transaksi);
+        return Promise.resolve({ rows, rowCount: rows.length });
+    }
+
     // 5. INSERT INTO
     if (lower.startsWith('insert into')) {
         let tableName = 'administrator';
