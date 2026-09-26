@@ -45,6 +45,21 @@ app.use(session({
     }
 }));
 
+// Auto DB Initialization Middleware (Guarantees DB Ready on Serverless)
+let dbInitPromise = null;
+app.use(async (req, res, next) => {
+    try {
+        if (!dbInitPromise) {
+            dbInitPromise = initDatabase();
+        }
+        await dbInitPromise;
+    } catch (err) {
+        console.error('DB Middleware Init Error:', err);
+        dbInitPromise = null;
+    }
+    next();
+});
+
 // Setup Global Helpers & Locals for Views
 app.use(setupLocals);
 

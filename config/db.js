@@ -39,7 +39,10 @@ if (process.env.DATABASE_URL) {
 // Inisialisasi SQLite Database Helper
 function getSqliteDb() {
     if (!sqliteDb) {
-        const dbPath = path.join(__dirname, '..', 'database', 'dapur_ina.sqlite');
+        let dbPath = path.join(__dirname, '..', 'database', 'dapur_ina.sqlite');
+        if (process.env.VERCEL) {
+            dbPath = path.join('/tmp', 'dapur_ina.sqlite');
+        }
         sqliteDb = new sqlite3.Database(dbPath);
     }
     return sqliteDb;
