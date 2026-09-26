@@ -178,19 +178,27 @@ const pool = {
 async function initDatabase() {
     console.log('Memeriksa Konektivitas Database...');
 
-    try {
-        const client = await pgPool.connect();
-        isUsingPostgres = true;
-        console.log('🐘 Terhubung ke Database PostgreSQL!');
+    if (process.env.DATABASE_URL) {
+        try {
+            const client = await pgPool.connect();
+            isUsingPostgres = true;
+            console.log('🐘 Terhubung ke Database PostgreSQL Cloud!');
 
-        const schemaPath = path.join(__dirname, '..', 'database', 'schema.sql');
-        if (fs.existsSync(schemaPath)) {
-            const schemaSql = fs.readFileSync(schemaPath, 'utf8');
-            await client.query(schemaSql);
+            const schemaPath = path.resolve(process.cwd(), 'database', 'schema.sql');
+            if (fs.existsSync(schemaPath)) {
+                const schemaSql = fs.readFileSync(schemaPath, 'utf8');
+                await client.query(schemaSql);
+            }
+            client.release();
+        } catch (pgErr) {
+            console.warn('⚠️ Gagal koneksi PostgreSQL, beralih ke SQLite:', pgErr.message);
+            isUsingPostgres = false;
         }
-        client.release();
-    } catch (pgErr) {
+    } else {
         isUsingPostgres = false;
+    }
+
+    if (!isUsingPostgres) {
         console.log('Menggunakan Database Internal SQLite (Siap Digunakan Tanpa Setup!).');
 
         const db = getSqliteDb();

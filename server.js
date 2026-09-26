@@ -24,15 +24,18 @@ const apiRoutes = require('./routes/apiRoutes');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// View Engine EJS
+// View Engine EJS (Resolves correctly in local & Vercel serverless)
+const viewsPath = path.resolve(process.cwd(), 'views');
+const publicPath = path.resolve(process.cwd(), 'public');
+
 app.set('view engine', 'ejs');
-app.set('views', path.join(__dirname, 'views'));
+app.set('views', viewsPath);
 
 // Middlewares
 app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(publicPath));
 
 // Session Configuration
 app.use(session({
