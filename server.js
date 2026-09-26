@@ -25,8 +25,8 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // View Engine EJS (Resolves correctly in local & Vercel serverless)
-const viewsPath = path.resolve(process.cwd(), 'views');
-const publicPath = path.resolve(process.cwd(), 'public');
+const viewsPath = path.join(__dirname, 'views');
+const publicPath = path.join(__dirname, 'public');
 
 app.set('view engine', 'ejs');
 app.set('views', viewsPath);

@@ -136,7 +136,7 @@ async function query(text, params = []) {
         try {
             return await pgPool.query(text, params);
         } catch (err) {
-            console.error('❌ PostgreSQL Query Error:', err.message);
+            console.error('PostgreSQL Query Error:', err.message);
             throw err;
         }
     } else {
@@ -182,7 +182,7 @@ async function initDatabase() {
         try {
             const client = await pgPool.connect();
             isUsingPostgres = true;
-            console.log('🐘 Terhubung ke Database PostgreSQL Cloud!');
+            console.log('Terhubung ke Database PostgreSQL Cloud!');
 
             const schemaPath = path.resolve(process.cwd(), 'database', 'schema.sql');
             if (fs.existsSync(schemaPath)) {
@@ -191,7 +191,7 @@ async function initDatabase() {
             }
             client.release();
         } catch (pgErr) {
-            console.warn('⚠️ Gagal koneksi PostgreSQL, beralih ke SQLite:', pgErr.message);
+            console.warn('Gagal koneksi PostgreSQL, beralih ke SQLite:', pgErr.message);
             isUsingPostgres = false;
         }
     } else {
