@@ -95,11 +95,12 @@ class UserController {
             }
 
             const cleanCatatan = catatan ? catatan.trim() : '';
+            const cleanPhone = (no_telepon || '').replace(/[^0-9]/g, '').trim() || '-';
 
             const headerData = {
                 nomor_meja: nomor_meja || 'Meja 01',
                 nama_pelanggan: nama_pelanggan.trim(),
-                no_telepon: (no_telepon && no_telepon.trim()) ? no_telepon.trim() : '-',
+                no_telepon: cleanPhone,
                 alamat: alamat || 'Dine In',
                 catatan: cleanCatatan,
                 metode_pembayaran: 'menunggu'

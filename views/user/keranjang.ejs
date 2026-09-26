@@ -71,7 +71,9 @@
                                 <label class="form-label" style="font-weight: 700; font-size: 0.84rem;">No. WhatsApp /
                                     Telepon (Opsional)</label>
                                 <input type="tel" name="no_telepon" class="form-control"
-                                    placeholder="Nomor telepon aktif" style="height: 44px; font-size: 0.9rem;">
+                                    placeholder="Contoh: 08123456789" inputmode="numeric" pattern="[0-9]*" maxlength="15"
+                                    oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+                                    style="height: 44px; font-size: 0.9rem;">
                             </div>
 
                             <div class="form-group" style="margin-bottom: 0;">
