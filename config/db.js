@@ -70,21 +70,217 @@ function getSqliteDb() {
     return sqliteDb;
 }
 
+// =========================================================================
+// 16 VERIFIED HIGH-RESOLUTION SAMPLE PRODUCTS (100% Matching, Delicious)
+// =========================================================================
+const initialSampleProducts = [
+    // 1. Makanan Utama
+    {
+        id_produk: 1,
+        nama_produk: 'Nasi Goreng Spesial Dapur Ina',
+        kategori: 'Makanan Utama',
+        harga: 25000,
+        stok: 50,
+        status_stok: 'Tersedia',
+        deskripsi: 'Nasi goreng bumbu racikan khas dengan suwiran ayam, telur, acar wortel mentimun, dan kerupuk renyah.',
+        gambar: 'https://images.unsplash.com/photo-1603133872878-684f208fb84b?auto=format&fit=crop&w=600&q=80',
+        id_admin: 1
+    },
+    {
+        id_produk: 2,
+        nama_produk: 'Mie Goreng Seafood Spesial',
+        kategori: 'Makanan Utama',
+        harga: 30000,
+        stok: 25,
+        status_stok: 'Tersedia',
+        deskripsi: 'Mie telur kenyal dimasak wajan panas bersama udang windu segar, cumi kenyal, sayuran hijau, dan bumbu gurih lezat.',
+        gambar: 'https://images.unsplash.com/photo-1585032226651-759b368d7246?auto=format&fit=crop&w=600&q=80',
+        id_admin: 1
+    },
+    {
+        id_produk: 3,
+        nama_produk: 'Ayam Goreng Sambal Ina',
+        kategori: 'Makanan Utama',
+        harga: 28000,
+        stok: 45,
+        status_stok: 'Tersedia',
+        deskripsi: 'Ayam goreng empuk bumbu rempah kuning gurih garing keemasan, disajikan hangat dengan sambal terasi pedas mantap.',
+        gambar: 'https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?auto=format&fit=crop&w=600&q=80',
+        id_admin: 1
+    },
+    {
+        id_produk: 4,
+        nama_produk: 'Ayam Panggang Madu Rempah',
+        kategori: 'Makanan Utama',
+        harga: 35000,
+        stok: 3,
+        status_stok: 'Menipis',
+        deskripsi: 'Ayam panggang oven bumbu madu kecap rempah legit, meresap harum disajikan dengan cocolan sambal khas.',
+        gambar: 'https://images.unsplash.com/photo-1598103442097-8b74394b95c6?auto=format&fit=crop&w=600&q=80',
+        id_admin: 1
+    },
+    {
+        id_produk: 5,
+        nama_produk: 'Sate Ayam Bumbu Kacang Madura',
+        kategori: 'Makanan Utama',
+        harga: 28000,
+        stok: 35,
+        status_stok: 'Tersedia',
+        deskripsi: 'Tusukan daging ayam empuk dibakar arang wangi, disajikan hangat dengan siraman bumbu kacang gurih dan irisan bawang.',
+        gambar: 'https://images.unsplash.com/photo-1772855386828-a18ff9a12584?auto=format&fit=crop&w=600&q=80',
+        id_admin: 1
+    },
+    {
+        id_produk: 6,
+        nama_produk: 'Soto Ayam Kuah Santan Rempah',
+        kategori: 'Makanan Utama',
+        harga: 32000,
+        stok: 20,
+        status_stok: 'Tersedia',
+        deskripsi: 'Kuah kuning santan gurih kaya rempah tradisional disajikan lengkap dengan suwiran ayam, soun, nasi hangat, sambal, dan jeruk nipis.',
+        gambar: 'https://images.unsplash.com/photo-1572656631137-7935297eff55?auto=format&fit=crop&w=600&q=80',
+        id_admin: 1
+    },
+    {
+        id_produk: 7,
+        nama_produk: 'Mie Kuah Seafood Telur Spesial',
+        kategori: 'Makanan Utama',
+        harga: 32000,
+        stok: 20,
+        status_stok: 'Tersedia',
+        deskripsi: 'Mie kuah hangat berkaldu gurih disajikan dengan udang windu manis, telur setengah matang, dan sayuran hijau segar.',
+        gambar: 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?auto=format&fit=crop&w=600&q=80',
+        id_admin: 1
+    },
+
+    // 2. Appetizer
+    {
+        id_produk: 8,
+        nama_produk: 'Lumpia Goreng Semarang Renyah (4 pcs)',
+        kategori: 'Appetizer',
+        harga: 18000,
+        stok: 40,
+        status_stok: 'Tersedia',
+        deskripsi: 'Kulit lumpia renyah keemasan dengan isian rebung manis, ayam, dan telur, disajikan hangat dengan saus cocolan khas.',
+        gambar: 'https://images.unsplash.com/photo-1515022376298-7333f33e704b?auto=format&fit=crop&w=600&q=80',
+        id_admin: 1
+    },
+    {
+        id_produk: 9,
+        nama_produk: 'Pastel Goreng Segitiga Renyah (4 pcs)',
+        kategori: 'Appetizer',
+        harga: 16000,
+        stok: 30,
+        status_stok: 'Tersedia',
+        deskripsi: 'Kulit pastry berlapis renyah dengan isian sayur bumbu rempah kari gurih, disajikan dengan cabai rawit hijau segar.',
+        gambar: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=600&q=80',
+        id_admin: 1
+    },
+    {
+        id_produk: 10,
+        nama_produk: 'Dimsum Siomay Ayam Kukus (4 pcs)',
+        kategori: 'Appetizer',
+        harga: 20000,
+        stok: 35,
+        status_stok: 'Tersedia',
+        deskripsi: 'Olahan daging ayam dan udang lembut gurih dibungkus kulit tipis, dikukus hangat disajikan dengan saus cocolan nikmat.',
+        gambar: 'https://images.unsplash.com/photo-1496116218417-1a781b1c416c?auto=format&fit=crop&w=600&q=80',
+        id_admin: 1
+    },
+    {
+        id_produk: 11,
+        nama_produk: 'Ayam Popcorn Crispy Gurih',
+        kategori: 'Appetizer',
+        harga: 22000,
+        stok: 30,
+        status_stok: 'Tersedia',
+        deskripsi: 'Fillet ayam dipotong dadu dibalut tepung berbumbu gurih renyah, camilan lezat dengan cocolan saus mayones spesial.',
+        gambar: 'https://images.unsplash.com/photo-1562967914-608f82629710?auto=format&fit=crop&w=600&q=80',
+        id_admin: 1
+    },
+
+    // 3. Minuman
+    {
+        id_produk: 12,
+        nama_produk: 'Es Lemon Tea Segar',
+        kategori: 'Minuman',
+        harga: 8000,
+        stok: 100,
+        status_stok: 'Tersedia',
+        deskripsi: 'Seduhan daun teh pilihan berpadu irisan lemon segar dan daun mint dengan es batu kristal pelepas dahaga.',
+        gambar: 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?auto=format&fit=crop&w=600&q=80',
+        id_admin: 1
+    },
+    {
+        id_produk: 13,
+        nama_produk: 'Es Jeruk Peras Murni',
+        kategori: 'Minuman',
+        harga: 10000,
+        stok: 80,
+        status_stok: 'Tersedia',
+        deskripsi: 'Jeruk peras manis segar kaya vitamin C murni tanpa pemanis buatan, disajikan dingin menyegarkan.',
+        gambar: 'https://images.unsplash.com/photo-1613478223719-2ab802602423?auto=format&fit=crop&w=600&q=80',
+        id_admin: 1
+    },
+    {
+        id_produk: 14,
+        nama_produk: 'Kopi Susu Gula Aren Ina',
+        kategori: 'Minuman',
+        harga: 18000,
+        stok: 50,
+        status_stok: 'Tersedia',
+        deskripsi: 'Perpaduan espresso kopi aromatik pilihan, susu segar lembut gurih, dan manis legit gula aren murni.',
+        gambar: 'https://images.unsplash.com/photo-1517701550927-30cf4ba1dba5?auto=format&fit=crop&w=600&q=80',
+        id_admin: 1
+    },
+    {
+        id_produk: 15,
+        nama_produk: 'Es Jeruk Nipis Mint Squash',
+        kategori: 'Minuman',
+        harga: 12000,
+        stok: 60,
+        status_stok: 'Tersedia',
+        deskripsi: 'Perasan jeruk nipis segar berpadu daun mint dan soda dingin kristal, memberikan sensasi asam segar yang melegakan.',
+        gambar: 'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=600&q=80',
+        id_admin: 1
+    },
+    {
+        id_produk: 16,
+        nama_produk: 'Jus Mangga Tropis Segar',
+        kategori: 'Minuman',
+        harga: 18000,
+        stok: 40,
+        status_stok: 'Tersedia',
+        deskripsi: 'Daging mangga manis harum diblend lembut kental, kaya nutrisi dan kesegaran buah tropis alami.',
+        gambar: 'https://images.unsplash.com/photo-1534353473418-4cfa6c56fd38?auto=format&fit=crop&w=600&q=80',
+        id_admin: 1
+    }
+];
+
 // ==========================================
 // PURE JAVASCRIPT IN-MEMORY DATABASE ENGINE
 // ==========================================
 const memoryDb = {
-    administrator: [],
+    administrator: [
+        {
+            id_admin: 1,
+            nama: 'Administrator Dapur Ina',
+            email: 'admin@dapurina.com',
+            // bcrypt hash of 'admin123'
+            password: '$2a$10$w8TfJ3jCqLhD0kS6hPq1yO91fO2P6Ld4YqP1k8V3U5j9s.9J5lF7y',
+            created_at: new Date().toISOString()
+        }
+    ],
     pelanggan: [],
-    produk: [],
+    produk: [...initialSampleProducts],
     pesanan: [],
     detail_pesanan: [],
     laporan_penjualan: [],
     transaksi: [],
     autoInc: {
-        administrator: 1,
+        administrator: 2,
         pelanggan: 1,
-        produk: 1,
+        produk: 17,
         pesanan: 1,
         detail_pesanan: 1,
         laporan_penjualan: 1,
@@ -113,8 +309,13 @@ function runMemoryQuery(sql, params = []) {
     // 2. SELECT PRODUK
     if (lower.startsWith('select') && lower.includes('from produk')) {
         let rows = [...memoryDb.produk];
+        // filter by exact name
+        if (lower.includes('nama_produk =')) {
+            const nameVal = params[0];
+            rows = rows.filter(r => (r.nama_produk || '').toLowerCase() === String(nameVal).toLowerCase());
+        }
         // filter by category
-        if (lower.includes('lower(p.kategori) = lower(') || lower.includes('p.kategori =')) {
+        if (lower.includes('lower(p.kategori) = lower(') || lower.includes('p.kategori =') || lower.includes('kategori =')) {
             const cat = params[0];
             if (cat) rows = rows.filter(r => (r.kategori || '').toLowerCase() === String(cat).toLowerCase());
         }
