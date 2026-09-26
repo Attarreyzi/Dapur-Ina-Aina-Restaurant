@@ -352,17 +352,64 @@ function runMemoryQuery(sql, params = []) {
         return Promise.resolve({ rows, rowCount: rows.length });
     }
 
-    // 4. SELECT PESANAN & DETAIL
+    // 4. SELECT PESANAN & DETAIL (WITH JOINS)
     if (lower.startsWith('select') && lower.includes('from pesanan')) {
-        let rows = [...memoryDb.pesanan];
+        let rows = memoryDb.pesanan.map(p => {
+            const cust = memoryDb.pelanggan.find(c => String(c.id_pelanggan) === String(p.id_pelanggan)) || {};
+            const trx = memoryDb.transaksi.find(t => String(t.id_pesanan) === String(p.id_pesanan)) || {};
+            const items = memoryDb.detail_pesanan.filter(d => String(d.id_pesanan) === String(p.id_pesanan));
+            const totalItem = items.reduce((sum, it) => sum + (parseInt(it.jumlah, 10) || 1), 0);
+            const rincianMenu = items.map(it => {
+                const pr = memoryDb.produk.find(prod => String(prod.id_produk) === String(it.id_produk)) || {};
+                return `${pr.nama_produk || 'Item'} (${it.jumlah})`;
+            }).join(', ');
+
+            return {
+                ...p,
+                waktu_pesan: p.tanggal || p.created_at,
+                total_harga: parseFloat(p.total) || 0,
+                status_pesanan: p.status || 'Menunggu',
+                nomor_meja: p.nomor_meja || 'Meja 01',
+                catatan: p.catatan || '',
+                snap_token: p.snap_token || '',
+                metode_pilihan: p.metode_pembayaran || 'tunai',
+                id_pelanggan: cust.id_pelanggan || p.id_pelanggan,
+                nama_pelanggan: cust.nama || p.nama_pelanggan || `Pelanggan ${p.nomor_meja || 'Meja 01'}`,
+                no_telepon: cust.no_telepon || p.no_telepon || '-',
+                alamat: cust.alamat || p.alamat || 'Dine In',
+                id_transaksi: trx.id_transaksi || null,
+                tanggal_bayar: trx.tanggal_bayar || null,
+                metode_pembayaran: trx.metode || p.metode_pembayaran || 'tunai',
+                jumlah_bayar: parseFloat(trx.jumlah_bayar) || 0,
+                uang_diterima: parseFloat(trx.uang_diterima) || 0,
+                uang_kembalian: parseFloat(trx.uang_kembalian) || 0,
+                no_referensi: trx.no_referensi || '',
+                status_transaksi: trx.status || 'Menunggu',
+                total_item: totalItem,
+                rincian_menu: rincianMenu
+            };
+        });
+
         if (lower.includes('id_pesanan =') && params.length > 0) {
             rows = rows.filter(r => String(r.id_pesanan) === String(params[0]));
         }
+        rows.sort((a, b) => b.id_pesanan - a.id_pesanan);
         return Promise.resolve({ rows, rowCount: rows.length });
     }
 
     if (lower.startsWith('select') && lower.includes('from detail_pesanan')) {
-        let rows = [...memoryDb.detail_pesanan];
+        let rows = memoryDb.detail_pesanan.map(d => {
+            const prod = memoryDb.produk.find(pr => String(pr.id_produk) === String(d.id_produk)) || {};
+            return {
+                ...d,
+                nama_produk: prod.nama_produk || 'Menu Hidangan',
+                kategori: prod.kategori || 'Makanan',
+                gambar: prod.gambar || 'https://images.unsplash.com/photo-1603133872878-684f208fb84b?auto=format&fit=crop&w=600&q=80',
+                harga: parseFloat(d.harga) || parseFloat(prod.harga) || 0,
+                subtotal: parseFloat(d.subtotal) || (parseFloat(d.harga || prod.harga || 0) * (d.jumlah || 1))
+            };
+        });
+
         if (lower.includes('id_pesanan =') && params.length > 0) {
             rows = rows.filter(r => String(r.id_pesanan) === String(params[0]));
         }
@@ -410,27 +457,29 @@ function runMemoryQuery(sql, params = []) {
             newRow.no_telepon = params[1];
             newRow.alamat = params[2];
         } else if (tableName === 'pesanan') {
+            // INSERT INTO pesanan (id_pelanggan, tanggal, total, status, nomor_meja, catatan, metode_pembayaran) VALUES ($1, NOW(), $2, 'Menunggu', $3, $4, $5)
             newRow.id_pelanggan = params[0];
             newRow.total = parseFloat(params[1]) || 0;
-            newRow.status = params[2] || 'Menunggu';
-            newRow.nomor_meja = params[3] || 'Meja 01';
-            newRow.catatan = params[4] || '';
-            newRow.snap_token = params[5] || '';
+            newRow.status = 'Menunggu';
+            newRow.nomor_meja = params[2] || 'Meja 01';
+            newRow.catatan = params[3] || '';
+            newRow.metode_pembayaran = params[4] || 'tunai';
+            newRow.snap_token = '';
             newRow.tanggal = new Date().toISOString();
         } else if (tableName === 'detail_pesanan') {
             newRow.id_pesanan = params[0];
             newRow.id_produk = params[1];
-            newRow.jumlah = params[2];
-            newRow.harga = params[3];
-            newRow.subtotal = params[4];
+            newRow.jumlah = parseInt(params[2], 10) || 1;
+            newRow.harga = parseFloat(params[3]) || 0;
+            newRow.subtotal = parseFloat(params[4]) || (newRow.jumlah * newRow.harga);
         } else if (tableName === 'transaksi') {
             newRow.id_pesanan = params[0];
-            newRow.id_laporan = params[1];
-            newRow.metode = params[2];
-            newRow.jumlah_bayar = params[3];
-            newRow.uang_diterima = params[4];
-            newRow.uang_kembalian = params[5];
-            newRow.no_referensi = params[6];
+            newRow.id_laporan = params[1] || null;
+            newRow.metode = params[2] || 'tunai';
+            newRow.jumlah_bayar = parseFloat(params[3]) || 0;
+            newRow.uang_diterima = parseFloat(params[4]) || 0;
+            newRow.uang_kembalian = parseFloat(params[5]) || 0;
+            newRow.no_referensi = params[6] || '';
             newRow.status = params[7] || 'Selesai';
             newRow.tanggal_bayar = new Date().toISOString();
         }
@@ -449,10 +498,19 @@ function runMemoryQuery(sql, params = []) {
 
         let idParam = params[params.length - 1];
         let found = memoryDb[tableName].find(r => String(r['id_' + tableName] || r['id_admin'] || r['id_produk'] || r['id_pesanan']) === String(idParam));
-        if (found && tableName === 'produk') {
-            if (lower.includes('set stok =')) {
-                found.stok = parseInt(params[0], 10) || 0;
-                found.status_stok = params[1];
+        if (found) {
+            if (tableName === 'pesanan') {
+                if (lower.includes('snap_token =')) {
+                    found.snap_token = params[0];
+                }
+                if (lower.includes('status =')) {
+                    found.status = params[0];
+                }
+            } else if (tableName === 'produk') {
+                if (lower.includes('set stok =')) {
+                    found.stok = parseInt(params[0], 10) || 0;
+                    found.status_stok = params[1];
+                }
             }
         }
         return Promise.resolve({ rows: found ? [found] : [], rowCount: found ? 1 : 0 });

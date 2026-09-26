@@ -103,14 +103,18 @@
                 </div>
             </div>
 
-            <% const cleanDisplayCatatan=(order.catatan || '' ).replace(/\[Metode:[^\]]+\]/gi, '' ).trim(); %>
-                <% if (cleanDisplayCatatan) { %>
-                    <div
-                        style="padding: 12px; background: #fff7ed; border: 1px solid #fed7aa; border-radius: var(--radius-md); margin-bottom: 18px; font-size: 0.84rem; color: #9a3412;">
-                        <strong>Catatan Khusus:</strong>
-                        <%= cleanDisplayCatatan %>
-                    </div>
-                    <% } %>
+            <% 
+            const rawCatatan = (order.catatan || '').trim();
+            const isDefaultStatus = ['menunggu', 'tunai', 'qris', 'transfer', 'lunas', '-', 'dine in', 'take away', ''].includes(rawCatatan.toLowerCase());
+            const cleanDisplayCatatan = (!isDefaultStatus) ? rawCatatan.replace(/\[Metode:[^\]]+\]/gi, '').trim() : '';
+            %>
+            <% if (cleanDisplayCatatan) { %>
+                <div
+                    style="padding: 12px 14px; background: #fff7ed; border: 1px solid #fed7aa; border-radius: var(--radius-md); margin-bottom: 18px; font-size: 0.86rem; color: #9a3412; display: flex; align-items: flex-start; gap: 8px;">
+                    <span style="font-weight: 800; flex-shrink: 0;">Catatan Khusus:</span>
+                    <span><%= cleanDisplayCatatan %></span>
+                </div>
+            <% } %>
 
                         <!-- Total Tagihan -->
                         <div class="cart-bill-summary" style="margin-bottom: 20px;">
