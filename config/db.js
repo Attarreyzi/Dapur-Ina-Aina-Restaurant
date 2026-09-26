@@ -349,7 +349,7 @@ function runMemoryQuery(sql, params = []) {
         if (lower.includes('email') && params.length > 0) {
             rows = rows.filter(r => (r.email || '').toLowerCase() === String(params[0]).toLowerCase());
         }
-        if (lower.includes('id_admin =') && params.length > 0) {
+        if (/where\s+(id_admin\s*=\s*(\$1|\?))/i.test(trimmed) && params.length > 0) {
             rows = rows.filter(r => String(r.id_admin) === String(params[0]));
         }
         return Promise.resolve({ rows, rowCount: rows.length });
@@ -370,6 +370,7 @@ function runMemoryQuery(sql, params = []) {
             return {
                 ...p,
                 waktu_pesan: p.tanggal || p.created_at,
+                total_tagihan: parseFloat(p.total) || 0,
                 total_harga: parseFloat(p.total) || 0,
                 status_pesanan: p.status || 'Menunggu',
                 nomor_meja: p.nomor_meja || 'Meja 01',
@@ -382,6 +383,7 @@ function runMemoryQuery(sql, params = []) {
                 alamat: cust.alamat || p.alamat || 'Dine In',
                 id_transaksi: trx.id_transaksi || null,
                 tanggal_bayar: trx.tanggal_bayar || null,
+                metode: trx.metode || p.metode_pembayaran || 'tunai',
                 metode_pembayaran: trx.metode || p.metode_pembayaran || 'tunai',
                 jumlah_bayar: parseFloat(trx.jumlah_bayar || p.total || 0),
                 uang_diterima: parseFloat(trx.uang_diterima || p.total || 0),
@@ -393,9 +395,19 @@ function runMemoryQuery(sql, params = []) {
             };
         });
 
-        if (lower.includes('id_pesanan =') && params.length > 0) {
+        // Filter status if specified in query (e.g., status = 'Menunggu')
+        if (lower.includes("status = 'menunggu'") || lower.includes('status = "menunggu"')) {
+            rows = rows.filter(r => (r.status_pesanan || r.status || 'Menunggu') === 'Menunggu');
+        } else if (lower.includes("status = 'selesai'") || lower.includes('status = "selesai"')) {
+            rows = rows.filter(r => (r.status_pesanan || r.status) === 'Selesai');
+        }
+
+        // Only filter by id_pesanan when explicitly queried by ID ($1 or ?)
+        const isSingleOrderQuery = /where\s+(p\.)?id_pesanan\s*=\s*(\$1|\?)/i.test(trimmed);
+        if (isSingleOrderQuery && params.length > 0) {
             rows = rows.filter(r => String(r.id_pesanan) === String(params[0]));
         }
+
         rows.sort((a, b) => b.id_pesanan - a.id_pesanan);
         return Promise.resolve({ rows, rowCount: rows.length });
     }
@@ -413,7 +425,8 @@ function runMemoryQuery(sql, params = []) {
             };
         });
 
-        if (lower.includes('id_pesanan =') && params.length > 0) {
+        const isDetailOrderQuery = /where\s+(d\.)?id_pesanan\s*=\s*(\$1|\?)/i.test(trimmed);
+        if (isDetailOrderQuery && params.length > 0) {
             rows = rows.filter(r => String(r.id_pesanan) === String(params[0]));
         }
         return Promise.resolve({ rows, rowCount: rows.length });
@@ -634,8 +647,14 @@ function runSqlite(sql, params = []) {
     return new Promise((resolve, reject) => {
         const trimmed = sql.trim().toLowerCase();
 
-        // Convert Postgres $1, $2 to SQLite ?
-        let convertedSql = sql.replace(/\$(\d+)/g, '?');
+        // Convert Postgres $1, $2, $N to SQLite ? while duplicating params if $N is used multiple times
+        const sqliteParams = [];
+        let convertedSql = sql.replace(/\$(\d+)/g, (match, num) => {
+            const index = parseInt(num, 10) - 1;
+            sqliteParams.push(params[index]);
+            return '?';
+        });
+
         convertedSql = convertedSql.replace(/ILIKE/gi, 'LIKE');
         convertedSql = convertedSql.replace(/GREATEST\(0,\s*([^)]+)\)/gi, 'CASE WHEN ($1) < 0 THEN 0 ELSE ($1) END');
         convertedSql = convertedSql.replace(/string_agg\(([^,]+),\s*([^)]+)\)/gi, 'GROUP_CONCAT($1, $2)');
@@ -644,7 +663,7 @@ function runSqlite(sql, params = []) {
         convertedSql = convertedSql.replace(/NOW\(\)/gi, "datetime('now', 'localtime')");
 
         if (trimmed.startsWith('select') || trimmed.startsWith('pragma')) {
-            db.all(convertedSql, params, (err, rows) => {
+            db.all(convertedSql, sqliteParams, (err, rows) => {
                 if (err) return reject(err);
                 resolve({ rows: rows || [], rowCount: rows ? rows.length : 0 });
             });
@@ -654,7 +673,7 @@ function runSqlite(sql, params = []) {
                 convertedSql = convertedSql.replace(/RETURNING\s+.+$/i, '');
             }
 
-            db.run(convertedSql, params, function (err) {
+            db.run(convertedSql, sqliteParams, function (err) {
                 if (err) return reject(err);
                 const lastId = this.lastID;
                 const changes = this.changes;
